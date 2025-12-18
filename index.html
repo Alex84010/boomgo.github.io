@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Menu</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">
+
+  <style>
+    body {
+      background: #333;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .titlemenu {
+      font-size: 48px;
+      margin-top: 80px;
+      margin-bottom: 60px;
+    }
+
+    .buttonmenu img {
+      cursor: pointer;
+      margin: 8px;
+      height: 100px;
+    }
+
+    .personnage-hobby img {
+      width: 10%;
+      position: fixed;
+      bottom: 320px;
+      right: 140px;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .platforme-hobby img {
+      width: 20%;
+      position: fixed;
+      bottom: 140px;
+      right: 60px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <img src="assets/home.png" style="width:105px; position:fixed; top:10px; left:10px;"
+    onclick="window.location.href='./index.html'">
+  <img src="assets/retour.png" style="width:105px; position:fixed; top:10px; left:125px;"
+    onclick="window.location.href='./index.html'">
+  <img src="assets/actualiser.png" style="width:105px; position:fixed; top:10px; right:10px;"
+    onclick="window.location.href='./index.html'">
+
+  <h1 class="titlemenu">MENU PRINCIPAL</h1>
+
+  <div class="buttonmenu">
+    <img src="assets/logoniveaux.png" onclick="window.location.href='./niv1a10.html'"><br>
+    <img src="assets/logosolo.png" onclick="window.location.href='solo.html'"><br>
+    <img src="assets/logoediteur.png" onclick="window.location.href='editeur.html'"><br>
+    <img src="assets/logomesniveaux.png" onclick="window.location.href='mesniveaux.html'">
+  </div>
+
+  <div class="personnage-hobby">
+    <img src="assets/personnage.png" alt="Personnage">
+  </div>
+
+  <div class="platforme-hobby">
+    <img src="assets/platformehobby.png" alt="Plateforme">
+  </div>
+
+  <script>
+    const perso = document.querySelector(".personnage-hobby img");
+    const plateforme = document.querySelector(".platforme-hobby img");
+
+    let active = false;
+
+    let right = 140;
+    let bottom = 320;
+
+    let velocityY = 0;
+    let onPlatform = true;
+
+    const gravity = 1.2;
+    const jumpForce = 18;
+    const speed = 6;
+
+    const keys = {
+      left: false,
+      right: false
+    };
+
+    plateforme.addEventListener("click", () => {
+      active = true;
+      console.log("Easter egg activé");
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (!active) return;
+
+      if (e.key === "ArrowLeft") keys.left = true;
+      if (e.key === "ArrowRight") keys.right = true;
+
+      if (e.key === "ArrowUp" && onPlatform) {
+        velocityY = jumpForce;
+        onPlatform = false;
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft") keys.left = false;
+      if (e.key === "ArrowRight") keys.right = false;
+    });
+
+    function loop() {
+      if (active) {
+        // Déplacement horizontal fluide
+        if (keys.left) right += speed;
+        if (keys.right) right -= speed;
+
+        // Gravité
+        velocityY -= gravity;
+        bottom += velocityY;
+
+        // Limites écran
+        const screenWidth = window.innerWidth;
+        const persoWidth = perso.offsetWidth;
+
+        if (right < 0) right = 0;
+        if (right > screenWidth - persoWidth) {
+          right = screenWidth - persoWidth;
+        }
+
+        // Plateforme
+        const platformLeft = 60;
+        const platformRight = 60 + plateforme.offsetWidth;
+
+        if (
+          bottom <= 320 &&
+          bottom >= 300 &&
+          right + persoWidth > platformLeft &&
+          right < platformRight
+        ) {
+          bottom = 320;
+          velocityY = 0;
+          onPlatform = true;
+        } else {
+          onPlatform = false;
+        }
+
+        // Chute = level secret
+        if (bottom < -200) {
+          window.location.href = "level10.html";
+        }
+
+        // Appliquer positions
+        perso.style.right = right + "px";
+        perso.style.bottom = bottom + "px";
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+
+</body>
+
+</html>
