@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Éditeur de Niveau</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #2c3e50;
+      color: #ecf0f1;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 300px;
+      background: #34495e;
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #444;
+    }
+
+    h2 {
+      color: #3498db;
+      margin-bottom: 15px;
+      font-size: 18px;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 5px;
+    }
+
+    .section {
+      margin-bottom: 25px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+      color: #bdc3c7;
+    }
+
+    input[type="number"],
+    input[type="range"] {
+      width: 100%;
+      padding: 8px;
+      background: #2c3e50;
+      border: 1px solid #3498db;
+      color: #ecf0f1;
+      border-radius: 4px;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      height: 6px;
+    }
+
+    .range-value {
+      display: inline-block;
+      margin-left: 10px;
+      color: #3498db;
+      font-weight: bold;
+    }
+
+    .tool-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #3498db;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+
+    .tool-btn:hover {
+      background: #2980b9;
+    }
+
+    .tool-btn.active {
+      background: #e74c3c;
+    }
+
+    .action-btn {
+      background: #27ae60;
+    }
+
+    .action-btn:hover {
+      background: #229954;
+    }
+
+    .delete-btn {
+      background: #e74c3c;
+    }
+
+    .delete-btn:hover {
+      background: #c0392b;
+    }
+
+    .info {
+      font-size: 12px;
+      color: #95a5a6;
+      font-style: italic;
+      margin-top: 5px;
+    }
+
+    canvas {
+      border: 4px solid #222;
+    }
+
+    .controls {
+      margin-top: 15px;
+      padding: 15px;
+      background: #2c3e50;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px;"
+    onclick="window.location.href='./index.html'">
+  <img src="assets/logoretour.png" alt="Retour"
+    style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px;"
+    onclick="window.location.href='./index.html'">
+  <img src="assets/logorefresh.png" alt="Actualiser"
+    style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px;"
+    onclick="window.location.href='./editeur.html'">
+
+  <div class="sidebar">
+    <h1 style="color: #3498db; margin-bottom: 20px;">🎮 Éditeur de Niveau</h1>
+
+    <div class="section">
+      <h2>⚙️ Paramètres du Niveau</h2>
+      <div class="input-group">
+        <label>Temps de survie (secondes)</label>
+        <input type="number" id="survivalTime" value="120" min="10" max="600">
+      </div>
+      <div class="input-group">
+        <label>Nombre de vies (demi-vies)</label>
+        <input type="number" id="halfLives" value="6" min="2" max="20">
+      </div>
+      <div class="input-group">
+        <label>Bombes initiales</label>
+        <input type="number" id="initialBombs" value="4" min="0" max="20">
+      </div>
+      <div class="input-group">
+        <label>Intervalle spawn bombes (sec)</label>
+        <input type="number" id="bombSpawnInterval" value="30" min="5" max="120">
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>⏰ Horloge (Temps gelé)</h2>
+      <div class="input-group">
+        <label>Taux de drop (%): <span class="range-value" id="clockDropValue">20</span></label>
+        <input type="range" id="clockDropRate" min="0" max="100" value="20">
+      </div>
+      <div class="input-group">
+        <label>Intervalle de spawn (sec)</label>
+        <input type="number" id="clockSpawnInterval" value="15" min="5" max="60">
+      </div>
+      <div class="input-group">
+        <label>Durée du gel (sec)</label>
+        <input type="number" id="freezeDuration" value="5" min="1" max="20">
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🛠️ Outils</h2>
+      <button class="tool-btn active" id="platformTool">Plateforme</button>
+      <button class="tool-btn" id="trampolineTool">Tremplin</button>
+      <button class="tool-btn delete-btn" id="deleteTool">Supprimer</button>
+      <p class="info">Cliquez sur le canvas pour placer/supprimer. Glissez pour déplacer.</p>
+    </div>
+
+    <div class="section">
+      <h2>💾 Actions</h2>
+      <button class="tool-btn action-btn" id="testBtn">▶️ Tester le Niveau</button>
+      <button class="tool-btn action-btn" id="exportBtn">📤 Exporter le Code</button>
+      <button class="tool-btn delete-btn" id="clearBtn">🗑️ Tout Effacer</button>
+    </div>
+
+    <div class="controls">
+      <p style="font-size: 11px; color: #95a5a6;">
+        <strong>Contrôles:</strong><br>
+        • Clic: Placer objet<br>
+        • Clic sur objet: Sélectionner<br>
+        • Glisser: Déplacer objet<br>
+        • Mode supprimer: Effacer objet
+      </p>
+    </div>
+  </div>
+
+  <div class="game-container" id="gameContainer"></div>
+
+  <button id="publishBtn" style="
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  padding: 10px 15px;
+  font-size: 16px;
+">
+    Publier mon niveau
+  </button>
+
+  <script>
+    let config = {
+      type: Phaser.AUTO,
+      width: 800,
+      height: 600,
+      parent: 'gameContainer',
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 0 },
+          debug: false
+        }
+      },
+      scene: {
+        preload: preload,
+        create: create,
+        update: update
+      }
+    };
+
+    let game = new Phaser.Game(config);
+    let currentTool = 'platform';
+    let platforms = [];
+    let trampolines = [];
+    let scene;
+
+    // Gestion des outils
+    document.getElementById('platformTool').addEventListener('click', () => setTool('platform'));
+    document.getElementById('trampolineTool').addEventListener('click', () => setTool('trampoline'));
+    document.getElementById('deleteTool').addEventListener('click', () => setTool('delete'));
+
+    document.getElementById('clockDropRate').addEventListener('input', (e) => {
+      document.getElementById('clockDropValue').textContent = e.target.value;
+    });
+
+    function setTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      if (tool === 'platform') document.getElementById('platformTool').classList.add('active');
+      if (tool === 'trampoline') document.getElementById('trampolineTool').classList.add('active');
+      if (tool === 'delete') document.getElementById('deleteTool').classList.add('active');
+    }
+
+    function preload() {
+      // Charger les vraies images
+      this.load.image('sky', 'assets/sky.png');
+      this.load.image('ground', 'assets/platform.png');
+      this.load.image('tremplin', 'assets/tremplin.png');
+    }
+
+    function create() {
+      scene = this;
+
+      // Fond sky
+      this.add.image(400, 300, 'sky');
+
+      // Texte d'aide
+      this.add.text(400, 20, 'MODE ÉDITEUR - Cliquez pour placer des objets', {
+        fontSize: '18px',
+        fill: '#fff',
+        backgroundColor: '#000',
+        padding: { x: 10, y: 5 }
+      }).setOrigin(0.5).setDepth(1000);
+
+      // Plateforme du sol par défaut
+      let ground = this.add.image(400, 568, 'ground').setScale(2);
+      ground.setInteractive({ draggable: true });
+      ground.setData('type', 'platform');
+      ground.setData('scaleX', 2);
+      ground.setData('scaleY', 1);
+      platforms.push(ground);
+
+      // Gestion des clics
+      this.input.on('pointerdown', (pointer) => {
+        // Vérifier si on a cliqué sur un objet
+        let hitObjects = this.input.hitTestPointer(pointer);
+
+        if (hitObjects.length === 0 || (hitObjects.length === 1 && hitObjects[0].texture.key === 'sky')) {
+          // Clic sur zone vide
+          if (currentTool === 'platform') {
+            createPlatform(this, pointer.x, pointer.y);
+          } else if (currentTool === 'trampoline') {
+            createTrampoline(this, pointer.x, pointer.y);
+          }
+        }
+      });
+
+      // Gestion du clic sur objet
+      this.input.on('gameobjectdown', (pointer, gameObject) => {
+        if (currentTool === 'delete' && gameObject.getData('type')) {
+          deleteObject(gameObject);
+        }
+      });
+
+      // Mise à jour de la position pendant le drag
+      this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
+        gameObject.x = dragX;
+        gameObject.y = dragY;
+      });
+    }
+
+    function createPlatform(scene, x, y) {
+      let plat = scene.add.image(x, y, 'ground');
+      plat.setInteractive({ draggable: true });
+      plat.setData('type', 'platform');
+      plat.setData('scaleX', 1);
+      plat.setData('scaleY', 1);
+      plat.setTint(0xaaffaa); // Légère teinte pour différencier
+      platforms.push(plat);
+    }
+
+    function createTrampoline(scene, x, y) {
+      let tramp = scene.add.image(x, y, 'tremplin').setScale(0.04);
+      tramp.setInteractive({ draggable: true });
+      tramp.setData('type', 'trampoline');
+      trampolines.push(tramp);
+    }
+
+    function deleteObject(obj) {
+      if (obj.getData('type') === 'platform') {
+        platforms = platforms.filter(p => p !== obj);
+      } else if (obj.getData('type') === 'trampoline') {
+        trampolines = trampolines.filter(t => t !== obj);
+      }
+      obj.destroy();
+    }
+
+    function update() { }
+
+    // Actions
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      if (confirm('Effacer tous les objets (sauf le fond) ?')) {
+        platforms.forEach(p => p.destroy());
+        trampolines.forEach(t => t.destroy());
+        platforms = [];
+        trampolines = [];
+
+        // Recréer la plateforme du sol
+        if (scene) {
+          let ground = scene.add.image(400, 568, 'ground').setScale(2);
+          ground.setInteractive({ draggable: true });
+          ground.setData('type', 'platform');
+          ground.setData('scaleX', 2);
+          ground.setData('scaleY', 1);
+          platforms.push(ground);
+        }
+      }
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', exportCode);
+    document.getElementById('testBtn').addEventListener('click', testLevel);
+
+    function exportCode() {
+      const survivalTime = document.getElementById('survivalTime').value;
+      const halfLives = document.getElementById('halfLives').value;
+      const initialBombs = document.getElementById('initialBombs').value;
+      const bombInterval = document.getElementById('bombSpawnInterval').value;
+      const clockDropRate = document.getElementById('clockDropRate').value;
+      const clockInterval = document.getElementById('clockSpawnInterval').value;
+      const freezeDuration = document.getElementById('freezeDuration').value;
+
+      let code = `// ========================================
+// PARAMÈTRES DU NIVEAU
+// ========================================
+var survivalTime = ${survivalTime};
+const MAX_HALF_LIVES = ${halfLives};
+var halfLives = MAX_HALF_LIVES;
+
+// Configuration des bombes
+var initialBombCount = ${initialBombs};
+var bombSpawnInterval = ${bombInterval};
+
+// Configuration de l'horloge
+var clockDropRate = ${clockDropRate / 100};
+var clockSpawnInterval = ${clockInterval};
+var freezeDuration = ${freezeDuration};
+
+// ========================================
+// Dans la fonction create(), remplacer la section platforms par :
+// ========================================
+
+platforms = this.physics.add.staticGroup();
+`;
+
+      platforms.forEach((p) => {
+        const scaleX = p.getData('scaleX') || p.scaleX;
+        const scaleY = p.getData('scaleY') || p.scaleY;
+        code += `platforms.create(${Math.round(p.x)}, ${Math.round(p.y)}, 'ground').setScale(${scaleX}, ${scaleY}).refreshBody();\n`;
+      });
+
+      if (trampolines.length > 0) {
+        code += `\n// ========================================\n// Tremplins\n// ========================================\n`;
+        trampolines.forEach((t, i) => {
+          const varName = i === 0 ? 'tremplin' : `tremplin${i}`;
+          code += `${varName} = this.physics.add.staticSprite(${Math.round(t.x)}, ${Math.round(t.y)}, 'tremplin');\n`;
+          code += `${varName}.setScale(0.04);\n`;
+          code += `${varName}.refreshBody();\n`;
+          code += `this.physics.add.collider(player, ${varName}, bounceOnTrampoline, null, this);\n`;
+          code += `this.physics.add.collider(stars, ${varName});\n`;
+          code += `this.physics.add.collider(bombs, ${varName});\n\n`;
+        });
+      }
+
+      code += `\n// ========================================
+// BOMBES ET HORLOGES
+// ========================================
+
+// Bombes initiales
+for (let i = 0; i < ${initialBombs}; i++) spawnBomb(this);
+
+// Timer spawn bombes
+this.time.addEvent({
+  delay: ${bombInterval * 1000},
+  loop: true,
+  callback: () => {
+    if (!gameOver && !timeFrozen) spawnBomb(this);
+  }
+});
+
+// Timer spawn horloge
+this.time.addEvent({
+  delay: ${clockInterval * 1000},
+  loop: true,
+  callback: () => {
+    if (!gameOver && clock.countActive(true) === 0) {
+      if (Math.random() < ${clockDropRate / 100}) {
+        spawnClock(this);
+      }
+    }
+  }
+});
+
+// ========================================
+// Modifier aussi dans collectClock() :
+frozenTimeRemaining = ${freezeDuration};
+// ========================================`;
+
+      // Afficher le code dans une fenêtre modale
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.9);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+
+      const container = document.createElement('div');
+      container.style.cssText = `
+        width: 90%;
+        height: 90%;
+        background: #1e1e1e;
+        border-radius: 8px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+      `;
+
+      const title = document.createElement('h2');
+      title.textContent = '📤 Code exporté - Copiez et collez dans votre HTML';
+      title.style.cssText = 'color: #3498db; margin-bottom: 15px;';
+
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      textarea.style.cssText = `
+        flex: 1;
+        background: #2c2c2c;
+        color: #00ff00;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        border: 2px solid #3498db;
+        border-radius: 4px;
+        resize: none;
+      `;
+
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = '✖ Fermer';
+      closeBtn.style.cssText = `
+        margin-top: 15px;
+        padding: 12px;
+        background: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      `;
+      closeBtn.onclick = () => document.body.removeChild(overlay);
+
+      container.appendChild(title);
+      container.appendChild(textarea);
+      container.appendChild(closeBtn);
+      overlay.appendChild(container);
+      document.body.appendChild(overlay);
+
+      textarea.select();
+      document.execCommand('copy');
+
+      title.textContent = '✅ Code copié dans le presse-papier !';
+    }
+
+    function testLevel() {
+      alert('Pour tester votre niveau :\n\n1. Cliquez sur "Exporter le Code"\n2. Copiez le code généré\n3. Collez-le dans votre fichier HTML\n4. Ouvrez le fichier dans votre navigateur');
+    }
+
+    /* =====================================
+   PUBLICATION DU NIVEAU
+===================================== */
+    document.getElementById("publishBtn").addEventListener("click", () => {
+      const nom = prompt("Nom du niveau ?");
+      if (!nom) return;
+
+      // Capture du canvas Phaser
+      const canvas = document.querySelector("canvas");
+      const image = canvas.toDataURL("image/png");
+
+      // Paramètres du niveau
+      const niveauData = {
+        params: {
+          survivalTime: Number(document.getElementById('survivalTime').value),
+          halfLives: Number(document.getElementById('halfLives').value),
+          initialBombs: Number(document.getElementById('initialBombs').value),
+          bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value),
+          clockDropRate: Number(document.getElementById('clockDropRate').value),
+          clockSpawnInterval: Number(document.getElementById('clockSpawnInterval').value),
+          freezeDuration: Number(document.getElementById('freezeDuration').value)
+        },
+        platforms: platforms.map(p => ({
+          x: p.x,
+          y: p.y,
+          scaleX: p.scaleX,
+          scaleY: p.scaleY
+        })),
+        trampolines: trampolines.map(t => ({
+          x: t.x,
+          y: t.y
+        }))
+      };
+
+      const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
+
+      niveaux.push({
+        nom: nom,
+        image: image,
+        data: niveauData
+      });
+
+      localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+
+      alert("✅ Niveau publié !");
+    });
+
+  </script>
+</body>
+
+</html>
