@@ -13,6 +13,8 @@
       font-family: Arial;
       text-align: center;
       overflow: hidden;
+      margin: 0;
+      padding: 0;
     }
 
     .titlemenu {
@@ -29,18 +31,18 @@
 
     .personnage-hobby img {
       width: 10%;
+      min-width: 50px;
+      max-width: 120px;
       position: fixed;
-      bottom: 320px;
-      right: 140px;
       user-select: none;
       pointer-events: none;
     }
 
     .platforme-hobby img {
       width: 20%;
+      min-width: 100px;
+      max-width: 250px;
       position: fixed;
-      bottom: 140px;
-      right: 60px;
       cursor: pointer;
     }
   </style>
@@ -80,8 +82,9 @@
 
     let active = false;
 
-    let right = 140;
-    let bottom = 320;
+    // Position relative en pourcentages pour le responsive
+    let rightPercent = 8; // ~140px sur écran standard
+    let bottomPercent = 40; // ~320px sur écran standard
 
     let velocityY = 0;
     let onPlatform = true;
@@ -94,6 +97,42 @@
       left: false,
       right: false
     };
+
+    // Fonction pour positionner les éléments de manière responsive
+    function updatePositions() {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      
+      // Positionner la plateforme (coin bas-droit)
+      const platformRightPercent = 5;
+      const platformBottomPercent = 15;
+      
+      plateforme.style.right = platformRightPercent + '%';
+      plateforme.style.bottom = platformBottomPercent + '%';
+      
+      // Position initiale du personnage (au-dessus de la plateforme)
+      if (!active) {
+        const platformRect = plateforme.getBoundingClientRect();
+        const persoWidth = perso.offsetWidth;
+        
+        // Centrer le personnage sur la plateforme
+        rightPercent = ((screenWidth - platformRect.right + platformRect.width / 2 - persoWidth / 2) / screenWidth) * 100;
+        bottomPercent = ((platformRect.top - screenHeight + platformRect.height) / screenHeight) * 100 + 100;
+        
+        perso.style.right = rightPercent + '%';
+        perso.style.bottom = bottomPercent + '%';
+      }
+    }
+
+    // Position initiale
+    updatePositions();
+
+    // Repositionner lors du redimensionnement
+    window.addEventListener('resize', () => {
+      if (!active) {
+        updatePositions();
+      }
+    });
 
     plateforme.addEventListener("click", () => {
       active = true;
@@ -119,48 +158,65 @@
 
     function loop() {
       if (active) {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const persoWidth = perso.offsetWidth;
+        const persoHeight = perso.offsetHeight;
+
+        // Convertir le pourcentage en pixels pour les calculs
+        let rightPx = (rightPercent / 100) * screenWidth;
+        let bottomPx = (bottomPercent / 100) * screenHeight;
+
         // Déplacement horizontal fluide
-        if (keys.left) right += speed;
-        if (keys.right) right -= speed;
+        if (keys.left) rightPx += speed;
+        if (keys.right) rightPx -= speed;
 
         // Gravité
         velocityY -= gravity;
-        bottom += velocityY;
+        bottomPx += velocityY;
 
         // Limites écran
-        const screenWidth = window.innerWidth;
-        const persoWidth = perso.offsetWidth;
-
-        if (right < 0) right = 0;
-        if (right > screenWidth - persoWidth) {
-          right = screenWidth - persoWidth;
+        if (rightPx < 0) rightPx = 0;
+        if (rightPx > screenWidth - persoWidth) {
+          rightPx = screenWidth - persoWidth;
         }
 
-        // Plateforme
-        const platformLeft = 60;
-        const platformRight = 60 + plateforme.offsetWidth;
+        // Collision avec la plateforme
+        const platformRect = plateforme.getBoundingClientRect();
+        const platformLeft = screenWidth - platformRect.right;
+        const platformRight = screenWidth - platformRect.left;
+        const platformTop = screenHeight - platformRect.bottom;
 
+        const persoLeft = rightPx;
+        const persoRight = rightPx + persoWidth;
+        const persoBottom = bottomPx;
+
+        // Vérifier si le personnage est au-dessus de la plateforme
         if (
-          bottom <= 320 &&
-          bottom >= 300 &&
-          right + persoWidth > platformLeft &&
-          right < platformRight
+          velocityY <= 0 &&
+          bottomPx <= platformTop + platformRect.height + 10 &&
+          bottomPx >= platformTop - 10 &&
+          persoRight > platformLeft &&
+          persoLeft < platformRight
         ) {
-          bottom = 320;
+          bottomPx = platformTop + platformRect.height;
           velocityY = 0;
           onPlatform = true;
-        } else {
+        } else if (bottomPx < platformTop + platformRect.height - 20) {
           onPlatform = false;
         }
 
         // Chute = level secret
-        if (bottom < -200) {
+        if (bottomPx < -200) {
           window.location.href = "level11.html";
         }
 
-        // Appliquer positions
-        perso.style.right = right + "px";
-        perso.style.bottom = bottom + "px";
+        // Reconvertir en pourcentages et appliquer
+        rightPercent = (rightPx / screenWidth) * 100;
+        bottomPercent = (bottomPx / screenHeight) * 100;
+
+        perso.style.right = rightPercent + '%';
+        perso.style.bottom = bottomPercent + '%';
       }
 
       requestAnimationFrame(loop);
