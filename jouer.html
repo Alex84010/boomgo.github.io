@@ -141,16 +141,6 @@
       player.setBounce(0.2);
       player.setCollideWorldBounds(true);
       player.setDepth(20);
-      
-      // Ajuster la hitbox et le centrage du sprite
-      player.body.setSize(
-        player.width * 0.6,
-        player.height * 0.9
-      );
-      player.body.setOffset(
-        player.width * 0.2,
-        player.height * 0.1
-      );
 
       this.anims.create({
         key: 'left',
