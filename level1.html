@@ -6,6 +6,7 @@
   <title>Level 1</title>
   <link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -24,17 +25,17 @@
 
 <body>
 
-  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px;"
+  <!-- Boutons -->
+  <img src="assets/logohome.png" style="cursor:pointer;width:105px;position:fixed;top:10px;left:10px;"
     onclick="window.location.href='./index.html'">
-  <img src="assets/logoretour.png" alt="Retour"
-    style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px;"
+  <img src="assets/logoretour.png" style="cursor:pointer;width:105px;position:fixed;top:10px;left:125px;"
     onclick="window.location.href='./niv1a10.html'">
-  <img src="assets/logorefresh.png" alt="Actualiser"
-    style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px;"
+  <img src="assets/logorefresh.png" style="cursor:pointer;width:105px;position:fixed;top:10px;right:10px;"
     onclick="window.location.href='./level1.html'">
 
   <script>
-    var config = {
+    // ================= CONFIG =================
+    const config = {
       type: Phaser.AUTO,
       width: 800,
       height: 600,
@@ -47,51 +48,60 @@
 
     new Phaser.Game(config);
 
-    var player, cursors, platforms, stars, bombs;
-    var lifeIcons = [];
-    var gameOver = false;
+    // ================= VARIABLES =================
+    let player, cursors, platforms, stars, bombs;
+    let lifeIcons = [];
+    let gameOver = false;
 
     const MAX_HALF_LIVES = 6; // 3 vies
-    var halfLives = MAX_HALF_LIVES;
+    let halfLives = MAX_HALF_LIVES;
 
-    var elapsedTime = 0;
-    var survivalTime = 120;
-    var timerText;
+    let elapsedTime = 0;
+    const survivalTime = 120;
+    let timerText;
 
+    // ================= PRELOAD =================
     function preload() {
       this.load.image('sky', 'assets/sky.png');
       this.load.image('ground', 'assets/platform.png');
       this.load.image('star', 'assets/piece.png');
       this.load.image('bomb', 'assets/bombe.png');
+
       this.load.image('vie', 'assets/vie1.png');
       this.load.image('demivie', 'assets/vie3.png');
       this.load.image('novie', 'assets/vie2.png');
+
       const selectedChar = localStorage.getItem('selectedCharacter') || '1';
-this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
-    frameWidth: 160,
-    frameHeight: 230
-});
+      this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
+        frameWidth: 160,
+        frameHeight: 230
+      });
     }
 
+    // ================= CREATE =================
     function create() {
       this.add.image(400, 300, 'sky');
 
+      // Timer
       timerText = this.add.text(16, 16, 'Temps: 120', {
         fontSize: '32px',
         fill: '#000'
       });
 
+      // Vies
       for (let i = 0; i < 3; i++) {
         let icon = this.add.image(40 + i * 45, 70, 'vie').setScale(0.02);
         lifeIcons.push(icon);
       }
 
+      // Plateformes
       platforms = this.physics.add.staticGroup();
       platforms.create(400, 568, 'ground').setScale(2).refreshBody();
       platforms.create(600, 400, 'ground');
       platforms.create(100, 300, 'ground');
       platforms.create(750, 220, 'ground');
 
+      // Joueur
       player = this.physics.add.sprite(100, 450, 'dude');
       player.setBounce(0.2);
       player.setCollideWorldBounds(true);
@@ -118,6 +128,7 @@ this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
 
       cursors = this.input.keyboard.createCursorKeys();
 
+      // Étoiles
       stars = this.physics.add.group({
         key: 'star',
         repeat: 11,
@@ -129,27 +140,36 @@ this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
         c.setScale(0.015);
       });
 
+      // Bombes
       bombs = this.physics.add.group();
-      for (let i = 0; i < 3; i++) spawnBomb(this);
+      spawnBomb(this);
+      spawnBomb(this);
+      spawnBomb(this);
 
+      // Collisions
       this.physics.add.collider(player, platforms);
       this.physics.add.collider(stars, platforms);
       this.physics.add.collider(bombs, platforms);
+
       this.physics.add.overlap(player, stars, collectStar, null, this);
       this.physics.add.collider(player, bombs, hitBomb, null, this);
 
+      // Timer
       this.time.addEvent({
         delay: 1000,
         loop: true,
         callback: () => {
           if (gameOver) return;
+
           elapsedTime++;
           let remain = survivalTime - elapsedTime;
           timerText.setText('Temps: ' + remain);
+
           if (remain <= 0) victory(this);
         }
       });
 
+      // Nouvelle bombe toutes les 30s
       this.time.addEvent({
         delay: 30000,
         loop: true,
@@ -159,6 +179,7 @@ this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
       });
     }
 
+    // ================= UPDATE =================
     function update() {
       if (gameOver) return;
 
@@ -178,33 +199,26 @@ this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
       }
     }
 
+    // ================= FONCTIONS =================
     function updateLivesDisplay() {
       for (let i = 0; i < 3; i++) {
-        const lifeValue = halfLives - i * 2;
-
-        if (lifeValue >= 2) {
-          lifeIcons[i].setTexture('vie');
-        } else if (lifeValue === 1) {
-          lifeIcons[i].setTexture('demivie');
-        } else {
-          lifeIcons[i].setTexture('novie');
-        }
+        const value = halfLives - i * 2;
+        if (value >= 2) lifeIcons[i].setTexture('vie');
+        else if (value === 1) lifeIcons[i].setTexture('demivie');
+        else lifeIcons[i].setTexture('novie');
       }
     }
 
     function collectStar(player, star) {
       star.disableBody(true, true);
 
+      if (halfLives < MAX_HALF_LIVES) {
+        halfLives++;
+        updateLivesDisplay();
+      }
+
       if (stars.countActive(true) === 0) {
-
-        if (halfLives < MAX_HALF_LIVES) {
-          halfLives++;
-          updateLivesDisplay();
-        }
-
-        stars.children.iterate(c =>
-          c.enableBody(true, c.x, 0, true, true)
-        );
+        stars.children.iterate(c => c.enableBody(true, c.x, 0, true, true));
       }
     }
 
@@ -213,13 +227,12 @@ this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
 
       halfLives -= 2;
       if (halfLives < 0) halfLives = 0;
-
       updateLivesDisplay();
 
       if (halfLives <= 0) {
         gameOver = true;
-        this.physics.pause();
         player.setTint(0xff0000);
+        player.anims.play('turn');
       }
     }
 
@@ -234,7 +247,7 @@ this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
       bomb.setCollideWorldBounds(true);
       bomb.setVelocity(
         Phaser.Math.Between(-200, 200),
-        Phaser.Math.Between(20, 200)
+        Phaser.Math.Between(50, 200)
       );
     }
 
@@ -245,7 +258,7 @@ this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
 
       localStorage.setItem('level1', 'done');
 
-      scene.add.text(260, 280, 'Victoire', {
+      scene.add.text(260, 280, 'Victoire !', {
         fontSize: '40px',
         fill: '#00ff00'
       });
@@ -257,9 +270,4 @@ this.load.spritesheet('dude', `assets/personnage${selectedChar}.png`, {
   </script>
 
 </body>
-
-
 </html>
-
-
-
