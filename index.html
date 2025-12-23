@@ -28,20 +28,22 @@
     }
 
     .personnage-hobby img {
-      width: 10%;
+      width: 15%;
+      min-width: 80px;
       position: fixed;
-      bottom: 320px;
-      right: 140px;
       user-select: none;
       pointer-events: none;
+      z-index: 10;
     }
 
     .platforme-hobby img {
       width: 20%;
+      min-width: 150px;
       position: fixed;
       bottom: 140px;
       right: 60px;
       cursor: pointer;
+      z-index: 5;
     }
   </style>
 </head>
@@ -79,10 +81,6 @@
     const plateforme = document.querySelector(".platforme-hobby img");
 
     let active = false;
-
-    let right = 140;
-    let bottom = 320;
-
     let velocityY = 0;
     let onPlatform = true;
 
@@ -94,6 +92,43 @@
       left: false,
       right: false
     };
+
+    // Fonction pour obtenir la position de la plateforme
+    function getPlatformRect() {
+      const rect = plateforme.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    // Initialiser le personnage sur la plateforme
+    function initPersoPosition() {
+      const platform = getPlatformRect();
+      const persoWidth = perso.offsetWidth;
+      
+      // Centrer le personnage sur la plateforme
+      const centerX = platform.left + (platform.width / 2) - (persoWidth / 2);
+      const topY = platform.top;
+      
+      return {
+        x: centerX,
+        y: topY - perso.offsetHeight
+      };
+    }
+
+    let pos = { x: 0, y: 0 };
+
+    // Attendre que les images soient chargées
+    window.addEventListener('load', () => {
+      pos = initPersoPosition();
+      perso.style.left = pos.x + "px";
+      perso.style.top = pos.y + "px";
+    });
 
     plateforme.addEventListener("click", () => {
       active = true;
@@ -119,58 +154,72 @@
 
     function loop() {
       if (active) {
-        // Déplacement horizontal fluide
-        if (keys.left) right += speed;
-        if (keys.right) right -= speed;
+        const platform = getPlatformRect();
+        const persoWidth = perso.offsetWidth;
+        const persoHeight = perso.offsetHeight;
+        
+        // Déplacement horizontal
+        if (keys.left) pos.x -= speed;
+        if (keys.right) pos.x += speed;
 
         // Gravité
         velocityY -= gravity;
-        bottom += velocityY;
+        pos.y -= velocityY;
 
         // Limites écran
         const screenWidth = window.innerWidth;
-        const persoWidth = perso.offsetWidth;
 
-        if (right < 0) right = 0;
-        if (right > screenWidth - persoWidth) {
-          right = screenWidth - persoWidth;
+        if (pos.x < 0) pos.x = 0;
+        if (pos.x > screenWidth - persoWidth) {
+          pos.x = screenWidth - persoWidth;
         }
 
-        // Plateforme
-        const platformLeft = 60;
-        const platformRight = 60 + plateforme.offsetWidth;
-
+        // Collision avec la plateforme
+        const persoLeft = pos.x;
+        const persoRight = pos.x + persoWidth;
+        const persoBottom = pos.y + persoHeight;
+        
         if (
-          bottom <= 320 &&
-          bottom >= 300 &&
-          right + persoWidth > platformLeft &&
-          right < platformRight
+          persoBottom >= platform.top &&
+          persoBottom <= platform.top + 30 &&
+          persoRight > platform.left &&
+          persoLeft < platform.right &&
+          velocityY <= 0
         ) {
-          bottom = 320;
+          pos.y = platform.top - persoHeight;
           velocityY = 0;
           onPlatform = true;
-        } else {
+        } else if (persoBottom < platform.top) {
           onPlatform = false;
         }
 
         // Chute = level secret
-        if (bottom < -200) {
+        if (pos.y > window.innerHeight + 200) {
           window.location.href = "level11.html";
         }
 
         // Appliquer positions
-        perso.style.right = right + "px";
-        perso.style.bottom = bottom + "px";
+        perso.style.left = pos.x + "px";
+        perso.style.top = pos.y + "px";
       }
 
       requestAnimationFrame(loop);
     }
 
     loop();
+    
+    // Réajuster la position du personnage lors du redimensionnement
+    window.addEventListener('resize', () => {
+      if (!active) {
+        pos = initPersoPosition();
+        perso.style.left = pos.x + "px";
+        perso.style.top = pos.y + "px";
+      }
+    });
 
+    // Charger le personnage sélectionné
     const selectedChar = localStorage.getItem('selectedCharacter') || '1';
-    const persoHobby = document.querySelector(".personnage-hobby img");
-    persoHobby.src = `assets/personnage${selectedChar}.png`;
+    perso.src = `assets/personnage${selectedChar}.png`;
 
   </script>
 
