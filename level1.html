@@ -10,7 +10,7 @@
   <style>
     body {
       margin: 0;
-      background-color: rgb(65, 61, 61);
+      background: #444;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -18,7 +18,7 @@
     }
 
     canvas {
-      border: 4px solid rgb(41, 21, 21);
+      border: 4px solid #222;
     }
   </style>
 </head>
@@ -26,16 +26,13 @@
 <body>
 
   <!-- Boutons -->
-  <img src="assets/logohome.png"
-    style="cursor:pointer;width:105px;position:fixed;top:10px;left:10px;"
+  <img src="assets/logohome.png" style="cursor:pointer;width:105px;position:fixed;top:10px;left:10px;"
     onclick="window.location.href='./index.html'">
 
-  <img src="assets/logoretour.png"
-    style="cursor:pointer;width:105px;position:fixed;top:10px;left:125px;"
+  <img src="assets/logoretour.png" style="cursor:pointer;width:105px;position:fixed;top:10px;left:125px;"
     onclick="window.location.href='./niv1a10.html'">
 
-  <img src="assets/logorefresh.png"
-    style="cursor:pointer;width:105px;position:fixed;top:10px;right:10px;"
+  <img src="assets/logorefresh.png" style="cursor:pointer;width:105px;position:fixed;top:10px;right:10px;"
     onclick="window.location.href='./level1.html'">
 
   <script>
@@ -46,10 +43,7 @@
       height: 600,
       physics: {
         default: 'arcade',
-        arcade: {
-          gravity: { y: 300 },
-          debug: false
-        }
+        arcade: { gravity: { y: 300 }, debug: false }
       },
       scene: { preload, create, update }
     };
@@ -61,7 +55,7 @@
     let lifeIcons = [];
     let gameOver = false;
 
-    const MAX_HALF_LIVES = 6; // 3 vies
+    const MAX_HALF_LIVES = 6; // 3 cœurs
     let halfLives = MAX_HALF_LIVES;
 
     let elapsedTime = 0;
@@ -86,29 +80,41 @@
       });
     }
 
-   function create() {
+    // ================= CREATE =================
+    function create() {
       this.add.image(400, 300, 'sky');
 
+      // Timer
       timerText = this.add.text(16, 16, 'Temps: 120', {
         fontSize: '32px',
         fill: '#000'
       });
 
-      for (let i = 0; i < 2; i++) {
-        let icon = this.add.image(40 + i * 45, 70, 'vie').setScale(0.02);
-        lifeIcons.push(icon);
+      // Cœurs
+      for (let i = 0; i < 3; i++) {
+        lifeIcons.push(
+          this.add.image(40 + i * 45, 70, 'vie').setScale(0.02)
+        );
       }
 
+      // Plateformes
       platforms = this.physics.add.staticGroup();
       platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-      platforms.create(40, 280, 'ground');
-      platforms.create(500, 410, 'ground');
-      platforms.create(750, 210, 'ground');
+      platforms.create(600, 400, 'ground');
+      platforms.create(100, 300, 'ground');
+      platforms.create(750, 220, 'ground');
 
+      // Joueur (mêmes proportions que solo)
       player = this.physics.add.sprite(100, 450, 'dude');
+      player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(true);
 
+      // Hitbox fidèle
+      player.body.setSize(player.width * 0.5, player.height * 0.8);
+      player.body.setOffset(player.width * 0.25, player.height * 0.2);
+
+      // Animations
       this.anims.create({
         key: 'left',
         frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
@@ -131,6 +137,7 @@
 
       cursors = this.input.keyboard.createCursorKeys();
 
+      // Pièces
       stars = this.physics.add.group({
         key: 'star',
         repeat: 11,
@@ -142,36 +149,43 @@
         c.setScale(0.015);
       });
 
+      // Bombes
       bombs = this.physics.add.group();
-      for (let i = 0; i < 5; i++) spawnBomb(this);
+      spawnBomb();
+      spawnBomb();
+      spawnBomb();
 
+      // Collisions
       this.physics.add.collider(player, platforms);
       this.physics.add.collider(stars, platforms);
       this.physics.add.collider(bombs, platforms);
       this.physics.add.overlap(player, stars, collectStar, null, this);
       this.physics.add.collider(player, bombs, hitBomb, null, this);
 
+      // Timer survie
       this.time.addEvent({
         delay: 1000,
         loop: true,
         callback: () => {
           if (gameOver) return;
           elapsedTime++;
-          let remain = survivalTime - elapsedTime;
+          const remain = survivalTime - elapsedTime;
           timerText.setText('Temps: ' + remain);
           if (remain <= 0) victory(this);
         }
       });
 
+      // Nouvelle bombe toutes les 30s
       this.time.addEvent({
         delay: 30000,
         loop: true,
         callback: () => {
-          if (!gameOver) spawnBomb(this);
+          if (!gameOver) spawnBomb();
         }
       });
     }
 
+    // ================= UPDATE =================
     function update() {
       if (gameOver) return;
 
@@ -191,20 +205,17 @@
       }
     }
 
+    // ================= GAMEPLAY =================
     function updateLivesDisplay() {
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 3; i++) {
         const value = halfLives - i * 2;
-
-        if (value >= 2) {
-          lifeIcons[i].setTexture('vie');
-        } else if (value === 1) {
-          lifeIcons[i].setTexture('demivie');
-        } else {
-          lifeIcons[i].setTexture('novie');
-        }
+        if (value >= 2) lifeIcons[i].setTexture('vie');
+        else if (value === 1) lifeIcons[i].setTexture('demivie');
+        else lifeIcons[i].setTexture('novie');
       }
     }
 
+    // ⭐ TOUTES les pièces = +1 demi-cœur
     function collectStar(player, star) {
       star.disableBody(true, true);
 
@@ -221,23 +232,24 @@
       }
     }
 
+    // 💣 Bombe = –1 cœur
     function hitBomb(player, bomb) {
       bomb.disableBody(true, true);
 
       halfLives -= 2;
       if (halfLives < 0) halfLives = 0;
-
       updateLivesDisplay();
 
       if (halfLives <= 0) {
         gameOver = true;
         this.physics.pause();
         player.setTint(0xff0000);
+        player.anims.play('turn');
       }
     }
 
-    function spawnBomb(scene) {
-      let bomb = bombs.create(
+    function spawnBomb() {
+      const bomb = bombs.create(
         Phaser.Math.Between(50, 750),
         16,
         'bomb'
@@ -247,7 +259,7 @@
       bomb.setCollideWorldBounds(true);
       bomb.setVelocity(
         Phaser.Math.Between(-200, 200),
-        Phaser.Math.Between(20, 200)
+        Phaser.Math.Between(50, 200)
       );
     }
 
@@ -256,9 +268,9 @@
       scene.physics.pause();
       player.setTint(0x00ff00);
 
-      localStorage.setItem('level2', 'done');
+      localStorage.setItem('level1', 'done');
 
-      scene.add.text(260, 280, 'Victoire', {
+      scene.add.text(260, 280, 'Victoire !', {
         fontSize: '40px',
         fill: '#00ff00'
       });
@@ -270,5 +282,4 @@
   </script>
 
 </body>
-
 </html>
