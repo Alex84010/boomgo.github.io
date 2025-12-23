@@ -68,7 +68,6 @@
     let platforms, trampolines, stars, bombs, clocks;
     let lifeIcons = [];
     let gameOver = false;
-
     let timeFrozen = false;
     let frozenTimeRemaining = 0;
 
@@ -119,9 +118,7 @@
       // Icônes de vie
       const numIcons = Math.ceil(MAX_HALF_LIVES / 2);
       for (let i = 0; i < numIcons; i++) {
-        lifeIcons.push(
-          this.add.image(40 + i * 45, 70, 'vie').setScale(0.02)
-        );
+        lifeIcons.push(this.add.image(40 + i * 45, 70, 'vie').setScale(0.02));
       }
 
       // Groupes
@@ -143,14 +140,11 @@
           .refreshBody();
       });
 
-      // Joueur (PROPORTIONS IDENTIQUES level1 / solo)
+      // Joueur (COMME LEVEL1)
       player = this.physics.add.sprite(100, 450, 'dude');
       player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(true);
-
-      player.body.setSize(player.width * 0.5, player.height * 0.8);
-      player.body.setOffset(player.width * 0.25, player.height * 0.2);
 
       // Animations
       this.anims.create({
@@ -289,7 +283,6 @@
       }
     }
 
-    // ⭐ TOUTES les pièces = +1 demi-cœur
     function collectStar(player, star) {
       star.disableBody(true, true);
 
@@ -298,9 +291,7 @@
           halfLives++;
           updateLivesDisplay();
         }
-        stars.children.iterate(c =>
-          c.enableBody(true, c.x, 0, true, true)
-        );
+        stars.children.iterate(c => c.enableBody(true, c.x, 0, true, true));
       }
     }
 
@@ -311,9 +302,7 @@
       frozenTimeRemaining = params.freezeDuration || 5;
       freezeText.setText('⏰ Temps gelé: ' + frozenTimeRemaining + 's');
 
-      bombs.children.iterate(b => {
-        if (b.active) b.setVelocity(0, 0);
-      });
+      bombs.children.iterate(b => { if (b.active) b.setVelocity(0, 0); });
     }
 
     function hitBomb(player, bomb) {
@@ -328,41 +317,24 @@
         this.physics.pause();
         player.setTint(0xff0000);
 
-        this.add.text(280, 280, 'Perdu!', {
-          fontSize: '40px',
-          fill: '#ff0000'
-        });
-
-        this.time.delayedCall(3000, () => {
-          window.location.href = 'mesniveaux.html';
-        });
+        this.add.text(280, 280, 'Perdu!', { fontSize: '40px', fill: '#ff0000' });
+        this.time.delayedCall(3000, () => window.location.href = 'mesniveaux.html');
       }
     }
 
     function spawnBomb() {
-      const bomb = bombs.create(
-        Phaser.Math.Between(50, 750),
-        16,
-        'bomb'
-      );
+      const bomb = bombs.create(Phaser.Math.Between(50, 750), 16, 'bomb');
       bomb.setScale(0.015);
       bomb.setBounce(1);
       bomb.setCollideWorldBounds(true);
 
       if (!timeFrozen) {
-        bomb.setVelocity(
-          Phaser.Math.Between(-250, 250),
-          Phaser.Math.Between(50, 250)
-        );
+        bomb.setVelocity(Phaser.Math.Between(-250, 250), Phaser.Math.Between(50, 250));
       }
     }
 
     function spawnClock() {
-      const clock = clocks.create(
-        Phaser.Math.Between(100, 700),
-        16,
-        'clock'
-      );
+      const clock = clocks.create(Phaser.Math.Between(100, 700), 16, 'clock');
       clock.setScale(0.02);
       clock.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
       clock.setVelocityX(Phaser.Math.Between(-100, 100));
@@ -372,15 +344,8 @@
       gameOver = true;
       scene.physics.pause();
       player.setTint(0x00ff00);
-
-      scene.add.text(260, 280, 'Victoire!', {
-        fontSize: '40px',
-        fill: '#00ff00'
-      });
-
-      scene.time.delayedCall(3000, () => {
-        window.location.href = 'mesniveaux.html';
-      });
+      scene.add.text(260, 280, 'Victoire!', { fontSize: '40px', fill: '#00ff00' });
+      scene.time.delayedCall(3000, () => window.location.href = 'mesniveaux.html');
     }
   </script>
 
