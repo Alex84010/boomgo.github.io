@@ -87,10 +87,10 @@
       this.load.image('clock', 'assets/horloge.png');
 
       const selectedChar = localStorage.getItem('selectedCharacter') || '1';
-      this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
-        frameWidth: 160,
-        frameHeight: 230
-      });
+this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
+    frameWidth: 160,
+    frameHeight: 230
+});
     }
 
     function create() {
