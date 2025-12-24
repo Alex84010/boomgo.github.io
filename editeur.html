@@ -496,57 +496,54 @@ this.time.addEvent({
       alert('Pour tester votre niveau :\n\n1. Cliquez sur "Exporter le Code"\n2. Copiez le code généré\n3. Collez-le dans votre fichier HTML\n4. Ouvrez le fichier dans votre navigateur');
     }
 
-    /* =====================================
-       PUBLICATION DU NIVEAU
-    ===================================== */
-    document.getElementById("publishBtn").addEventListener("click", () => {
-      const nom = prompt("Nom du niveau ?");
-      if (!nom) return;
+/* =====================================
+   PUBLICATION DU NIVEAU (VERSION SNAPSHOT)
+===================================== */
+document.getElementById("publishBtn").addEventListener("click", () => {
+    const nom = prompt("Nom du niveau ?");
+    if (!nom) return;
 
-      // Récupérer le canvas
-      const canvas = game.canvas;
-      
-      // Convertir en image
-      const imageData = canvas.toDataURL("image/png");
-      
-      console.log("Image capturée, longueur:", imageData.length);
+    // On demande à Phaser de prendre une capture d'écran du canvas
+    game.renderer.snapshot((image) => {
+        // 'image' est un élément <img> généré par Phaser
+        const imageData = image.src; 
 
-      // Paramètres du niveau
-      const niveauData = {
-        params: {
-          survivalTime: Number(document.getElementById('survivalTime').value),
-          halfLives: Number(document.getElementById('halfLives').value),
-          initialBombs: Number(document.getElementById('initialBombs').value),
-          bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
-        },
-        platforms: platforms.map(p => ({
-          x: p.x,
-          y: p.y,
-          scaleX: p.getData('scaleX') || p.scaleX,
-          scaleY: p.getData('scaleY') || p.scaleY
-        })),
-        trampolines: trampolines.map(t => ({
-          x: t.x,
-          y: t.y
-        }))
-      };
+        // Paramètres du niveau
+        const niveauData = {
+            params: {
+                survivalTime: Number(document.getElementById('survivalTime').value),
+                halfLives: Number(document.getElementById('halfLives').value),
+                initialBombs: Number(document.getElementById('initialBombs').value),
+                bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
+            },
+            platforms: platforms.map(p => ({
+                x: p.x,
+                y: p.y,
+                scaleX: p.getData('scaleX') || p.scaleX,
+                scaleY: p.getData('scaleY') || p.scaleY
+            })),
+            trampolines: trampolines.map(t => ({
+                x: t.x,
+                y: t.y
+            }))
+        };
 
-      const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
+        const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
 
-      niveaux.push({
-        nom: nom,
-        image: imageData,
-        data: niveauData
-      });
+        niveaux.push({
+            nom: nom,
+            image: imageData, // Ici on utilise les données du snapshot
+            data: niveauData
+        });
 
-      localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
-
-      console.log("Niveau sauvegardé. Total niveaux:", niveaux.length);
-      alert("✅ Niveau publié !");
+        localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+        
+        alert("✅ Niveau publié avec succès !");
     });
-
+});
   </script>
 </body>
 
 </html>
+
 
