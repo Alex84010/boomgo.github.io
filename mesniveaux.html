@@ -4,228 +4,58 @@
   <meta charset="UTF-8">
   <title>Mes niveaux</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
     body {
       background: #222;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       text-align: center;
-      padding: 20px;
-      min-height: 100vh;
-    }
-    h1 {
-      margin-top: 80px;
-      margin-bottom: 30px;
-      color: #3498db;
-      font-size: 32px;
     }
     #liste {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 25px;
+      grid-template-columns: repeat(auto-fill, 180px);
+      gap: 20px;
       justify-content: center;
       margin-top: 30px;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
-      padding: 20px;
     }
     .niveau {
       cursor: pointer;
-      background: #333;
-      border-radius: 12px;
-      padding: 15px;
-      transition: transform 0.3s, box-shadow 0.3s;
-      border: 2px solid #555;
-    }
-    .niveau:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
-      border-color: #3498db;
     }
     .niveau img {
-      width: 100%;
-      height: auto;
-      border-radius: 8px;
+      width: 180px;
+      border-radius: 10px;
       border: 2px solid #555;
-      display: block;
-      background: #000;
-    }
-    .niveau p {
-      margin-top: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      color: #ecf0f1;
-    }
-    .niveau .stats {
-      margin-top: 8px;
-      font-size: 12px;
-      color: #95a5a6;
-    }
-    .empty-state {
-      margin-top: 100px;
-      color: #95a5a6;
-      font-size: 18px;
-    }
-    .empty-state p {
-      margin-bottom: 20px;
-    }
-    .empty-state button {
-      background: #3498db;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .empty-state button:hover {
-      background: #2980b9;
-    }
-    .error-image {
-      width: 100%;
-      height: 150px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-      border: 2px solid #555;
-    }
-    .delete-btn {
-      background: #e74c3c;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      margin-top: 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: background 0.3s;
-    }
-    .delete-btn:hover {
-      background: #c0392b;
     }
   </style>
 </head>
 <body>
-  <img src="assets/logohome.png" alt="Home" 
-    style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px; z-index: 1000;"
+  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px;"
     onclick="window.location.href='./index.html'">
   <img src="assets/logoretour.png" alt="Retour"
-    style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px; z-index: 1000;"
+    style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px;"
     onclick="window.location.href='./index.html'">
   <img src="assets/logorefresh.png" alt="Actualiser"
-    style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px; z-index: 1000;"
-    onclick="window.location.reload()">
-  
-  <h1>📚 Mes Niveaux Personnalisés</h1>
+    style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px;"
+    onclick="window.location.href='./mesniveaux.html'">
+  <h1>Mes niveaux</h1>
   <div id="liste"></div>
-
   <script>
     const liste = document.getElementById("liste");
-    
-    // Charger les niveaux depuis localStorage
-    let niveaux = [];
-    try {
-      niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
-      console.log("Niveaux chargés:", niveaux.length);
-    } catch (error) {
-      console.error("Erreur lors du chargement des niveaux:", error);
-      liste.innerHTML = `
-        <div class="empty-state">
-          <p>❌ Erreur lors du chargement des niveaux</p>
-          <button onclick="localStorage.removeItem('mesNiveaux'); location.reload();">
-            Réinitialiser
-          </button>
-        </div>
-      `;
-    }
-
-    // Afficher les niveaux ou un message si vide
+    const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
     if (niveaux.length === 0) {
-      liste.innerHTML = `
-        <div class="empty-state">
-          <p>🎮 Aucun niveau publié pour le moment</p>
-          <p style="font-size: 14px; margin-top: 10px;">Créez votre premier niveau dans l'éditeur !</p>
-          <button onclick="window.location.href='./editeur.html'">
-            ➕ Créer un niveau
-          </button>
-        </div>
-      `;
-    } else {
-      // Afficher chaque niveau
-      niveaux.forEach((niveau, index) => {
-        const div = document.createElement("div");
-        div.className = "niveau";
-        
-        // Vérifier que l'image existe et est valide
-        let imageHTML = '';
-        if (niveau.image && niveau.image.startsWith('data:image')) {
-          imageHTML = `<img src="${niveau.image}" alt="${niveau.nom}" onerror="this.parentElement.querySelector('.error-image').style.display='flex'; this.style.display='none';">`;
-        } else {
-          console.warn(`Niveau ${index} (${niveau.nom}): image invalide ou manquante`);
-        }
-        
-        // Statistiques du niveau
-        const platformCount = niveau.data?.platforms?.length || 0;
-        const trampolineCount = niveau.data?.trampolines?.length || 0;
-        const survivalTime = niveau.data?.params?.survivalTime || 0;
-        
-        div.innerHTML = `
-          <div style="position: relative;">
-            ${imageHTML}
-            <div class="error-image" style="display: none;">
-              🎮
-            </div>
-          </div>
-          <p>${niveau.nom || 'Sans nom'}</p>
-          <div class="stats">
-            ⏱️ ${survivalTime}s | 🟦 ${platformCount} | 🎯 ${trampolineCount}
-          </div>
-          <button class="delete-btn" onclick="event.stopPropagation(); supprimerNiveau(${index})">
-            🗑️ Supprimer
-          </button>
-        `;
-        
-        // Clic pour jouer au niveau
-        div.onclick = (e) => {
-          if (!e.target.classList.contains('delete-btn')) {
-            localStorage.setItem("niveauAJouer", index);
-            window.location.href = "jouer.html";
-          }
-        };
-        
-        liste.appendChild(div);
-      });
+      liste.innerHTML = "<p>Aucun niveau publié</p>";
     }
-
-    // Fonction pour supprimer un niveau
-    function supprimerNiveau(index) {
-      if (confirm(`Voulez-vous vraiment supprimer le niveau "${niveaux[index].nom}" ?`)) {
-        niveaux.splice(index, 1);
-        localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
-        location.reload();
-      }
-    }
-
-    // Debug: afficher les informations dans la console
-    console.log("=== Debug Mes Niveaux ===");
-    niveaux.forEach((niveau, i) => {
-      console.log(`Niveau ${i}:`, {
-        nom: niveau.nom,
-        hasImage: !!niveau.image,
-        imageValid: niveau.image?.startsWith('data:image'),
-        imageSize: niveau.image?.length,
-        platforms: niveau.data?.platforms?.length,
-        trampolines: niveau.data?.trampolines?.length
-      });
+    niveaux.forEach((niveau, index) => {
+      const div = document.createElement("div");
+      div.className = "niveau";
+      div.innerHTML = `
+    <img src="${niveau.image}">
+    <p>${niveau.nom}</p>
+  `;
+      div.onclick = () => {
+        localStorage.setItem("niveauAJouer", index);
+        window.location.href = "jouer.html";
+      };
+      liste.appendChild(div);
     });
   </script>
 </body>
