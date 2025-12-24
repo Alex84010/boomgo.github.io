@@ -36,11 +36,11 @@
 <body>
 
   <!-- Boutons home / retour / refresh -->
-  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px; z-index: 999;"
+  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px;"
     onclick="window.location.href='./index.html'">
-  <img src="assets/logoretour.png" alt="Retour" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px; z-index: 999;"
+  <img src="assets/logoretour.png" alt="Retour" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px;"
     onclick="window.location.href='./index.html'">
-  <img src="assets/logorefresh.png" alt="Actualiser" style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px; z-index: 999;"
+  <img src="assets/logorefresh.png" alt="Actualiser" style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px;"
     onclick="window.location.href='./editeur.html'">
 
   <div class="sidebar">
@@ -213,67 +213,53 @@
     document.getElementById('testBtn').addEventListener('click', () => alert("Fonction Test non incluse ici"));
 
     // =================== Publication ===================
-    document.getElementById("publishBtn").addEventListener("click", function() {
-      const nom = prompt("Nom du niveau ?");
-      if (!nom) return;
+   document.getElementById("publishBtn").addEventListener("click", () => {
+  const nom = prompt("Nom du niveau ?");
+  if (!nom) return;
 
-      console.log("Début de la publication...");
+  // 📸 Utilisation de snapshot officiel de Phaser
+  scene.game.renderer.snapshot((snapshotImage) => {
+    // snapshotImage est un HTMLImageElement avec le rendu exact
+    const canvas = document.createElement("canvas");
+    canvas.width = 320; // miniature
+    canvas.height = 240;
+    const ctx = canvas.getContext("2d");
 
-      // Utiliser game.renderer.snapshotCanvas pour obtenir le canvas
-      scene.game.renderer.snapshot(function(image) {
-        console.log("Snapshot reçu:", image);
-        
-        // Créer un canvas temporaire pour redimensionner
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = 320;
-        tempCanvas.height = 240;
-        const ctx = tempCanvas.getContext('2d');
-        
-        // Attendre que l'image soit chargée
-        if (image.complete) {
-          processImage();
-        } else {
-          image.onload = processImage;
-        }
-        
-        function processImage() {
-          // Dessiner l'image sur le canvas temporaire
-          ctx.drawImage(image, 0, 0, 320, 240);
-          
-          // Convertir en data URL
-          const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
-          console.log("Image générée, taille:", imageData.length);
-          
-          // Préparer les données du niveau
-          const niveauData = {
-            params: {
-              survivalTime: Number(document.getElementById('survivalTime').value),
-              halfLives: Number(document.getElementById('halfLives').value),
-              initialBombs: Number(document.getElementById('initialBombs').value),
-              bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
-            },
-            platforms: platforms.map(p => ({
-              x: p.x,
-              y: p.y,
-              scaleX: p.getData('scaleX') || p.scaleX,
-              scaleY: p.getData('scaleY') || p.scaleY
-            })),
-            trampolines: trampolines.map(t => ({
-              x: t.x,
-              y: t.y
-            }))
-          };
+    // Dessiner l'image Phaser capturée sur la miniature
+    ctx.drawImage(snapshotImage, 0, 0, canvas.width, canvas.height);
 
-          // Charger les niveaux existants et ajouter le nouveau
-          const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
-          niveaux.push({ nom: nom, image: imageData, data: niveauData });
-          localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+    // Encoder en JPEG compressé
+    const imageData = canvas.toDataURL("image/jpeg", 0.8);
 
-          console.log("Niveau sauvegardé!");
-          alert("✅ Niveau publié avec succès !");
-        }
-      });
-    });
+    // Préparer les données du niveau
+    const niveauData = {
+      params: {
+        survivalTime: Number(document.getElementById('survivalTime').value),
+        halfLives: Number(document.getElementById('halfLives').value),
+        initialBombs: Number(document.getElementById('initialBombs').value),
+        bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
+      },
+      platforms: platforms.map(p => ({
+        x: p.x,
+        y: p.y,
+        scaleX: p.getData('scaleX') || p.scaleX,
+        scaleY: p.getData('scaleY') || p.scaleY
+      })),
+      trampolines: trampolines.map(t => ({
+        x: t.x,
+        y: t.y
+      }))
+    };
+
+    // Charger les niveaux existants et ajouter le nouveau
+    const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
+    niveaux.push({ nom, image: imageData, data: niveauData });
+    localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+
+    alert("✅ Niveau publié avec image !");
+  });
+});
+
   </script>
 </body>
 </html>
