@@ -501,42 +501,46 @@ this.time.addEvent({
       const nom = prompt("Nom du niveau ?");
       if (!nom) return;
 
-      // Attendre un frame pour être sûr que le rendu est complet
-      setTimeout(() => {
-        scene.renderer.snapshot((image) => {
-          // Paramètres du niveau
-          const niveauData = {
-            params: {
-              survivalTime: Number(document.getElementById('survivalTime').value),
-              halfLives: Number(document.getElementById('halfLives').value),
-              initialBombs: Number(document.getElementById('initialBombs').value),
-              bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
-            },
-            platforms: platforms.map(p => ({
-              x: p.x,
-              y: p.y,
-              scaleX: p.getData('scaleX') || p.scaleX,
-              scaleY: p.getData('scaleY') || p.scaleY
-            })),
-            trampolines: trampolines.map(t => ({
-              x: t.x,
-              y: t.y
-            }))
-          };
+      // Récupérer le canvas
+      const canvas = game.canvas;
+      
+      // Convertir en image
+      const imageData = canvas.toDataURL("image/png");
+      
+      console.log("Image capturée, longueur:", imageData.length);
 
-          const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
+      // Paramètres du niveau
+      const niveauData = {
+        params: {
+          survivalTime: Number(document.getElementById('survivalTime').value),
+          halfLives: Number(document.getElementById('halfLives').value),
+          initialBombs: Number(document.getElementById('initialBombs').value),
+          bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
+        },
+        platforms: platforms.map(p => ({
+          x: p.x,
+          y: p.y,
+          scaleX: p.getData('scaleX') || p.scaleX,
+          scaleY: p.getData('scaleY') || p.scaleY
+        })),
+        trampolines: trampolines.map(t => ({
+          x: t.x,
+          y: t.y
+        }))
+      };
 
-          niveaux.push({
-            nom: nom,
-            image: image.src,
-            data: niveauData
-          });
+      const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
 
-          localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+      niveaux.push({
+        nom: nom,
+        image: imageData,
+        data: niveauData
+      });
 
-          alert("✅ Niveau publié !");
-        });
-      }, 100);
+      localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+
+      console.log("Niveau sauvegardé. Total niveaux:", niveaux.length);
+      alert("✅ Niveau publié !");
     });
 
   </script>
