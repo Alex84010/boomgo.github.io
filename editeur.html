@@ -494,56 +494,60 @@ this.time.addEvent({
       alert('Pour tester votre niveau :\n\n1. Cliquez sur "Exporter le Code"\n2. Copiez le code généré\n3. Collez-le dans votre fichier HTML\n4. Ouvrez le fichier dans votre navigateur');
     }
 
-    /* =====================================
-       PUBLICATION DU NIVEAU
-    ===================================== */
-    document.getElementById("publishBtn").addEventListener("click", () => {
-      const nom = prompt("Nom du niveau ?");
-      if (!nom) return;
+document.getElementById("publishBtn").addEventListener("click", () => {
+  const nom = prompt("Nom du niveau ?");
+  if (!nom) return;
 
-      // Récupérer le canvas
-      const canvas = game.canvas;
-      
-      // Convertir en image
-      const imageData = canvas.toDataURL("image/png");
-      
-      console.log("Image capturée, longueur:", imageData.length);
+  // ✅ Récupérer le vrai canvas Phaser
+  const canvas = game.renderer.canvas;
 
-      // Paramètres du niveau
-      const niveauData = {
-        params: {
-          survivalTime: Number(document.getElementById('survivalTime').value),
-          halfLives: Number(document.getElementById('halfLives').value),
-          initialBombs: Number(document.getElementById('initialBombs').value),
-          bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
-        },
-        platforms: platforms.map(p => ({
-          x: p.x,
-          y: p.y,
-          scaleX: p.getData('scaleX') || p.scaleX,
-          scaleY: p.getData('scaleY') || p.scaleY
-        })),
-        trampolines: trampolines.map(t => ({
-          x: t.x,
-          y: t.y
-        }))
-      };
+  // ✅ Créer une miniature légère
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = 320;
+  tempCanvas.height = 240;
 
-      const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
+  const ctx = tempCanvas.getContext("2d");
+  ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
 
-      niveaux.push({
-        nom: nom,
-        image: imageData,
-        data: niveauData
-      });
+  // ✅ Encodage JPEG compressé
+  const imageData = tempCanvas.toDataURL("image/jpeg", 0.8);
 
-      localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+  console.log("Image OK, longueur :", imageData.length);
 
-      console.log("Niveau sauvegardé. Total niveaux:", niveaux.length);
-      alert("✅ Niveau publié !");
-    });
+  const niveauData = {
+    params: {
+      survivalTime: Number(document.getElementById('survivalTime').value),
+      halfLives: Number(document.getElementById('halfLives').value),
+      initialBombs: Number(document.getElementById('initialBombs').value),
+      bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
+    },
+    platforms: platforms.map(p => ({
+      x: p.x,
+      y: p.y,
+      scaleX: p.getData('scaleX') || p.scaleX,
+      scaleY: p.getData('scaleY') || p.scaleY
+    })),
+    trampolines: trampolines.map(t => ({
+      x: t.x,
+      y: t.y
+    }))
+  };
+
+  const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
+
+  niveaux.push({
+    nom,
+    image: imageData,
+    data: niveauData
+  });
+
+  localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+
+  alert("✅ Niveau publié !");
+});
 
   </script>
 </body>
 
 </html>
+
