@@ -122,7 +122,7 @@
       background: #c0392b;
     }
 
-        .publish-btn {
+    .publish-btn {
       background: #36b300;
     }
 
@@ -244,10 +244,6 @@
     document.getElementById('trampolineTool').addEventListener('click', () => setTool('trampoline'));
     document.getElementById('deleteTool').addEventListener('click', () => setTool('delete'));
 
-    document.getElementById('clockDropRate').addEventListener('input', (e) => {
-      document.getElementById('clockDropValue').textContent = e.target.value;
-    });
-
     function setTool(tool) {
       currentTool = tool;
       document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
@@ -320,7 +316,7 @@
       plat.setData('type', 'platform');
       plat.setData('scaleX', 1);
       plat.setData('scaleY', 1);
-      plat.setTint(0xaaffaa); // Légère teinte pour différencier
+      plat.setTint(0xaaffaa);
       platforms.push(plat);
     }
 
@@ -370,9 +366,6 @@
       const halfLives = document.getElementById('halfLives').value;
       const initialBombs = document.getElementById('initialBombs').value;
       const bombInterval = document.getElementById('bombSpawnInterval').value;
-      const clockDropRate = document.getElementById('clockDropRate').value;
-      const clockInterval = document.getElementById('clockSpawnInterval').value;
-      const freezeDuration = document.getElementById('freezeDuration').value;
 
       let code = `// ========================================
 // PARAMÈTRES DU NIVEAU
@@ -384,11 +377,6 @@ var halfLives = MAX_HALF_LIVES;
 // Configuration des bombes
 var initialBombCount = ${initialBombs};
 var bombSpawnInterval = ${bombInterval};
-
-// Configuration de l'horloge
-var clockDropRate = ${clockDropRate / 100};
-var clockSpawnInterval = ${clockInterval};
-var freezeDuration = ${freezeDuration};
 
 // ========================================
 // Dans la fonction create(), remplacer la section platforms par :
@@ -417,7 +405,7 @@ platforms = this.physics.add.staticGroup();
       }
 
       code += `\n// ========================================
-// BOMBES ET HORLOGES
+// BOMBES
 // ========================================
 
 // Bombes initiales
@@ -428,27 +416,9 @@ this.time.addEvent({
   delay: ${bombInterval * 1000},
   loop: true,
   callback: () => {
-    if (!gameOver && !timeFrozen) spawnBomb(this);
+    if (!gameOver) spawnBomb(this);
   }
-});
-
-// Timer spawn horloge
-this.time.addEvent({
-  delay: ${clockInterval * 1000},
-  loop: true,
-  callback: () => {
-    if (!gameOver && clock.countActive(true) === 0) {
-      if (Math.random() < ${clockDropRate / 100}) {
-        spawnClock(this);
-      }
-    }
-  }
-});
-
-// ========================================
-// Modifier aussi dans collectClock() :
-frozenTimeRemaining = ${freezeDuration};
-// ========================================`;
+});`;
 
       // Afficher le code dans une fenêtre modale
       const overlay = document.createElement('div');
@@ -524,55 +494,52 @@ frozenTimeRemaining = ${freezeDuration};
       alert('Pour tester votre niveau :\n\n1. Cliquez sur "Exporter le Code"\n2. Copiez le code généré\n3. Collez-le dans votre fichier HTML\n4. Ouvrez le fichier dans votre navigateur');
     }
 
-/* =====================================
-   PUBLICATION DU NIVEAU
-===================================== */
-document.getElementById("publishBtn").addEventListener("click", () => {
-  const nom = prompt("Nom du niveau ?");
-  if (!nom) return;
+    /* =====================================
+       PUBLICATION DU NIVEAU
+    ===================================== */
+    document.getElementById("publishBtn").addEventListener("click", () => {
+      const nom = prompt("Nom du niveau ?");
+      if (!nom) return;
 
-  // Attendre que le rendu soit complet avant de capturer
-  scene.renderer.snapshot((image) => {
-    // Paramètres du niveau
-    const niveauData = {
-      params: {
-        survivalTime: Number(document.getElementById('survivalTime').value),
-        halfLives: Number(document.getElementById('halfLives').value),
-        initialBombs: Number(document.getElementById('initialBombs').value),
-        bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value),
-        clockDropRate: 0, // Désactivé
-        clockSpawnInterval: 999, // Désactivé
-        freezeDuration: 0 // Désactivé
-      },
-      platforms: platforms.map(p => ({
-        x: p.x,
-        y: p.y,
-        scaleX: p.getData('scaleX') || p.scaleX,
-        scaleY: p.getData('scaleY') || p.scaleY
-      })),
-      trampolines: trampolines.map(t => ({
-        x: t.x,
-        y: t.y
-      }))
-    };
+      // Attendre un frame pour être sûr que le rendu est complet
+      setTimeout(() => {
+        scene.renderer.snapshot((image) => {
+          // Paramètres du niveau
+          const niveauData = {
+            params: {
+              survivalTime: Number(document.getElementById('survivalTime').value),
+              halfLives: Number(document.getElementById('halfLives').value),
+              initialBombs: Number(document.getElementById('initialBombs').value),
+              bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
+            },
+            platforms: platforms.map(p => ({
+              x: p.x,
+              y: p.y,
+              scaleX: p.getData('scaleX') || p.scaleX,
+              scaleY: p.getData('scaleY') || p.scaleY
+            })),
+            trampolines: trampolines.map(t => ({
+              x: t.x,
+              y: t.y
+            }))
+          };
 
-    const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
+          const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
 
-    niveaux.push({
-      nom: nom,
-      image: image.src, // Utiliser image.src au lieu de toDataURL
-      data: niveauData
+          niveaux.push({
+            nom: nom,
+            image: image.src,
+            data: niveauData
+          });
+
+          localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+
+          alert("✅ Niveau publié !");
+        });
+      }, 100);
     });
 
-    localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
-
-    alert("✅ Niveau publié !");
-  });
-});
   </script>
 </body>
 
-
 </html>
-
-
