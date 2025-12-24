@@ -213,37 +213,54 @@
     document.getElementById('testBtn').addEventListener('click', () => alert("Fonction Test non incluse ici"));
 
     // =================== Publication ===================
-    document.getElementById("publishBtn").addEventListener("click", () => {
-      const nom = prompt("Nom du niveau ?");
-      if (!nom) return;
+   document.getElementById("publishBtn").addEventListener("click", () => {
+  const nom = prompt("Nom du niveau ?");
+  if (!nom) return;
 
-      game.renderer.snapshot(image => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 320;
-        canvas.height = 240;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  // 📸 Utilisation de snapshot officiel de Phaser
+  scene.game.renderer.snapshot((snapshotImage) => {
+    // snapshotImage est un HTMLImageElement avec le rendu exact
+    const canvas = document.createElement("canvas");
+    canvas.width = 320; // miniature
+    canvas.height = 240;
+    const ctx = canvas.getContext("2d");
 
-        const imageData = canvas.toDataURL("image/jpeg", 0.8);
+    // Dessiner l'image Phaser capturée sur la miniature
+    ctx.drawImage(snapshotImage, 0, 0, canvas.width, canvas.height);
 
-        const niveauData = {
-          params: {
-            survivalTime: Number(document.getElementById('survivalTime').value),
-            halfLives: Number(document.getElementById('halfLives').value),
-            initialBombs: Number(document.getElementById('initialBombs').value),
-            bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
-          },
-          platforms: platforms.map(p => ({ x: p.x, y: p.y, scaleX: p.getData('scaleX') || p.scaleX, scaleY: p.getData('scaleY') || p.scaleY })),
-          trampolines: trampolines.map(t => ({ x: t.x, y: t.y }))
-        };
+    // Encoder en JPEG compressé
+    const imageData = canvas.toDataURL("image/jpeg", 0.8);
 
-        const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
-        niveaux.push({ nom, image: imageData, data: niveauData });
-        localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+    // Préparer les données du niveau
+    const niveauData = {
+      params: {
+        survivalTime: Number(document.getElementById('survivalTime').value),
+        halfLives: Number(document.getElementById('halfLives').value),
+        initialBombs: Number(document.getElementById('initialBombs').value),
+        bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
+      },
+      platforms: platforms.map(p => ({
+        x: p.x,
+        y: p.y,
+        scaleX: p.getData('scaleX') || p.scaleX,
+        scaleY: p.getData('scaleY') || p.scaleY
+      })),
+      trampolines: trampolines.map(t => ({
+        x: t.x,
+        y: t.y
+      }))
+    };
 
-        alert("✅ Niveau publié avec image !");
-      });
-    });
+    // Charger les niveaux existants et ajouter le nouveau
+    const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
+    niveaux.push({ nom, image: imageData, data: niveauData });
+    localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
+
+    alert("✅ Niveau publié avec image !");
+  });
+});
+
   </script>
 </body>
 </html>
+
