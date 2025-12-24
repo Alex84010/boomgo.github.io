@@ -36,11 +36,11 @@
 <body>
 
   <!-- Boutons home / retour / refresh -->
-  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px; z-index: 1000;"
+  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px; z-index: 999;"
     onclick="window.location.href='./index.html'">
-  <img src="assets/logoretour.png" alt="Retour" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px; z-index: 1000;"
+  <img src="assets/logoretour.png" alt="Retour" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px; z-index: 999;"
     onclick="window.location.href='./index.html'">
-  <img src="assets/logorefresh.png" alt="Actualiser" style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px; z-index: 1000;"
+  <img src="assets/logorefresh.png" alt="Actualiser" style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px; z-index: 999;"
     onclick="window.location.href='./editeur.html'">
 
   <div class="sidebar">
@@ -212,29 +212,38 @@
     document.getElementById('exportBtn').addEventListener('click', () => alert("Fonction Export non incluse ici"));
     document.getElementById('testBtn').addEventListener('click', () => alert("Fonction Test non incluse ici"));
 
-    // =================== Publication avec capture d'écran ===================
-    document.getElementById("publishBtn").addEventListener("click", () => {
+    // =================== Publication ===================
+    document.getElementById("publishBtn").addEventListener("click", function() {
       const nom = prompt("Nom du niveau ?");
       if (!nom) return;
 
-      try {
-        // Attendre un petit délai pour s'assurer que le rendu est complet
-        setTimeout(() => {
-          // Récupérer le canvas Phaser directement
-          const phaserCanvas = scene.game.canvas;
-          
-          // Créer un canvas pour la miniature
-          const canvas = document.createElement("canvas");
-          canvas.width = 320;
-          canvas.height = 240;
-          const ctx = canvas.getContext("2d");
-          
-          // Dessiner le canvas Phaser sur la miniature
-          ctx.drawImage(phaserCanvas, 0, 0, canvas.width, canvas.height);
-          
-          // Convertir en data URL JPEG
-          const imageData = canvas.toDataURL("image/jpeg", 0.8);
+      console.log("Début de la publication...");
 
+      // Utiliser game.renderer.snapshotCanvas pour obtenir le canvas
+      scene.game.renderer.snapshot(function(image) {
+        console.log("Snapshot reçu:", image);
+        
+        // Créer un canvas temporaire pour redimensionner
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 320;
+        tempCanvas.height = 240;
+        const ctx = tempCanvas.getContext('2d');
+        
+        // Attendre que l'image soit chargée
+        if (image.complete) {
+          processImage();
+        } else {
+          image.onload = processImage;
+        }
+        
+        function processImage() {
+          // Dessiner l'image sur le canvas temporaire
+          ctx.drawImage(image, 0, 0, 320, 240);
+          
+          // Convertir en data URL
+          const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
+          console.log("Image générée, taille:", imageData.length);
+          
           // Préparer les données du niveau
           const niveauData = {
             params: {
@@ -255,322 +264,15 @@
             }))
           };
 
-          // Charger les niveaux existants
+          // Charger les niveaux existants et ajouter le nouveau
           const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
-          
-          // Ajouter le nouveau niveau
-          niveaux.push({ 
-            nom: nom, 
-            image: imageData, 
-            data: niveauData 
-          });
-          
-          // Sauvegarder dans localStorage
+          niveaux.push({ nom: nom, image: imageData, data: niveauData });
           localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
 
-          console.log("Niveau sauvegardé:", {
-            nom: nom,
-            imageSize: imageData.length,
-            platformCount: platforms.length,
-            trampolineCount: trampolines.length
-          });
-
+          console.log("Niveau sauvegardé!");
           alert("✅ Niveau publié avec succès !");
-          
-        }, 100); // Petit délai pour s'assurer que le rendu est terminé
-        
-      } catch (error) {
-        console.error("Erreur lors de la publication:", error);
-        alert("❌ Erreur lors de la publication du niveau");
-      }
-    });
-  </script>
-</body>
-</html><!doctype html>
-<html lang="fr">
-
-<head>
-  <meta charset="UTF-8">
-  <title>Éditeur de Niveau</title>
-  <link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: #2c3e50; color: #ecf0f1; display: flex; height: 100vh; overflow: hidden; }
-    .sidebar { width: 300px; background: #34495e; padding: 20px; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.3); }
-    .game-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #444; }
-    h2 { color: #3498db; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
-    .section { margin-bottom: 25px; }
-    .input-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-size: 13px; color: #bdc3c7; }
-    input[type="number"], input[type="range"] { width: 100%; padding: 8px; background: #2c3e50; border: 1px solid #3498db; color: #ecf0f1; border-radius: 4px; }
-    input[type="range"] { padding: 0; height: 6px; }
-    .range-value { display: inline-block; margin-left: 10px; color: #3498db; font-weight: bold; }
-    .tool-btn { display: block; width: 100%; padding: 10px; margin-bottom: 8px; background: #3498db; border: none; color: white; cursor: pointer; border-radius: 4px; font-size: 14px; transition: background 0.3s; }
-    .tool-btn:hover { background: #2980b9; }
-    .tool-btn.active { background: #e74c3c; }
-    .action-btn { background: #27ae60; }
-    .action-btn:hover { background: #229954; }
-    .delete-btn { background: #e74c3c; }
-    .delete-btn:hover { background: #c0392b; }
-    .publish-btn { background: #36b300; }
-    .publish-btn:hover { background: #2d9401; }
-    .info { font-size: 12px; color: #95a5a6; font-style: italic; margin-top: 5px; }
-    canvas { border: 4px solid #222; }
-    .controls { margin-top: 15px; padding: 15px; background: #2c3e50; border-radius: 4px; }
-  </style>
-</head>
-
-<body>
-
-  <!-- Boutons home / retour / refresh -->
-  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px; z-index: 1000;"
-    onclick="window.location.href='./index.html'">
-  <img src="assets/logoretour.png" alt="Retour" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px; z-index: 1000;"
-    onclick="window.location.href='./index.html'">
-  <img src="assets/logorefresh.png" alt="Actualiser" style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px; z-index: 1000;"
-    onclick="window.location.href='./editeur.html'">
-
-  <div class="sidebar">
-    <h1 style="color: #3498db; margin-bottom: 20px;">Éditeur de Niveau</h1>
-
-    <div class="section">
-      <h2>⚙️ Paramètres du Niveau</h2>
-      <div class="input-group">
-        <label>Temps de survie (secondes)</label>
-        <input type="number" id="survivalTime" value="120" min="10" max="600">
-      </div>
-      <div class="input-group">
-        <label>Nombre de vies (demi-vies)</label>
-        <input type="number" id="halfLives" value="6" min="2" max="20">
-      </div>
-      <div class="input-group">
-        <label>Bombes initiales</label>
-        <input type="number" id="initialBombs" value="4" min="0" max="20">
-      </div>
-      <div class="input-group">
-        <label>Intervalle spawn bombes (sec)</label>
-        <input type="number" id="bombSpawnInterval" value="30" min="5" max="120">
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>🛠️ Outils</h2>
-      <button class="tool-btn active" id="platformTool">Plateforme</button>
-      <button class="tool-btn" id="trampolineTool">Tremplin</button>
-      <button class="tool-btn delete-btn" id="deleteTool">Supprimer</button>
-      <p class="info">Cliquez sur le canvas pour placer/supprimer. Glissez pour déplacer.</p>
-    </div>
-
-    <div class="section">
-      <h2>💾 Actions</h2>
-      <button class="tool-btn action-btn" id="testBtn">▶️ Tester le Niveau</button>
-      <button class="tool-btn action-btn" id="exportBtn">📤 Exporter le Code</button>
-      <button class="tool-btn delete-btn" id="clearBtn">🗑️ Tout Effacer</button>
-      <button class="tool-btn publish-btn" id="publishBtn">✅ Publier mon niveau</button>
-    </div>
-
-    <div class="controls">
-      <p style="font-size: 11px; color: #95a5a6;">
-        <strong>Contrôles:</strong><br>
-        • Clic: Placer objet<br>
-        • Clic sur objet: Sélectionner<br>
-        • Glisser: Déplacer objet<br>
-        • Mode supprimer: Effacer objet
-      </p>
-    </div>
-  </div>
-
-  <div class="game-container" id="gameContainer"></div>
-
-  <script>
-    // =================== Phaser ===================
-    let config = {
-      type: Phaser.AUTO,
-      width: 800,
-      height: 600,
-      parent: 'gameContainer',
-      physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
-      scene: { preload: preload, create: create, update: update }
-    };
-
-    let game = new Phaser.Game(config);
-    let currentTool = 'platform';
-    let platforms = [];
-    let trampolines = [];
-    let scene;
-
-    function preload() {
-      this.load.image('sky', 'assets/sky.png');
-      this.load.image('ground', 'assets/platform.png');
-      this.load.image('tremplin', 'assets/tremplin.png');
-    }
-
-    function create() {
-      scene = this;
-      this.add.image(400, 300, 'sky');
-      this.add.text(400, 20, 'MODE ÉDITEUR - Cliquez pour placer des objets', {
-        fontSize: '18px',
-        fill: '#fff',
-        backgroundColor: '#000',
-        padding: { x: 10, y: 5 }
-      }).setOrigin(0.5).setDepth(1000);
-
-      let ground = this.add.image(400, 568, 'ground').setScale(2);
-      ground.setInteractive({ draggable: true });
-      ground.setData('type', 'platform');
-      ground.setData('scaleX', 2);
-      ground.setData('scaleY', 1);
-      platforms.push(ground);
-
-      this.input.on('pointerdown', pointer => {
-        let hitObjects = this.input.hitTestPointer(pointer);
-        if (hitObjects.length === 0 || (hitObjects.length === 1 && hitObjects[0].texture.key === 'sky')) {
-          if (currentTool === 'platform') createPlatform(this, pointer.x, pointer.y);
-          if (currentTool === 'trampoline') createTrampoline(this, pointer.x, pointer.y);
         }
       });
-
-      this.input.on('gameobjectdown', (pointer, gameObject) => {
-        if (currentTool === 'delete' && gameObject.getData('type')) deleteObject(gameObject);
-      });
-
-      this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
-        gameObject.x = dragX;
-        gameObject.y = dragY;
-      });
-    }
-
-    function update() {}
-
-    function createPlatform(scene, x, y) {
-      let plat = scene.add.image(x, y, 'ground');
-      plat.setInteractive({ draggable: true });
-      plat.setData('type', 'platform');
-      plat.setData('scaleX', 1);
-      plat.setData('scaleY', 1);
-      plat.setTint(0xaaffaa);
-      platforms.push(plat);
-    }
-
-    function createTrampoline(scene, x, y) {
-      let tramp = scene.add.image(x, y, 'tremplin').setScale(0.04);
-      tramp.setInteractive({ draggable: true });
-      tramp.setData('type', 'trampoline');
-      trampolines.push(tramp);
-    }
-
-    function deleteObject(obj) {
-      if (obj.getData('type') === 'platform') platforms = platforms.filter(p => p !== obj);
-      if (obj.getData('type') === 'trampoline') trampolines = trampolines.filter(t => t !== obj);
-      obj.destroy();
-    }
-
-    // =================== Outils ===================
-    document.getElementById('platformTool').addEventListener('click', () => setTool('platform'));
-    document.getElementById('trampolineTool').addEventListener('click', () => setTool('trampoline'));
-    document.getElementById('deleteTool').addEventListener('click', () => setTool('delete'));
-
-    function setTool(tool) {
-      currentTool = tool;
-      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-      if (tool === 'platform') document.getElementById('platformTool').classList.add('active');
-      if (tool === 'trampoline') document.getElementById('trampolineTool').classList.add('active');
-      if (tool === 'delete') document.getElementById('deleteTool').classList.add('active');
-    }
-
-    // =================== Actions ===================
-    document.getElementById('clearBtn').addEventListener('click', () => {
-      if (confirm('Effacer tous les objets (sauf le fond) ?')) {
-        platforms.forEach(p => p.destroy());
-        trampolines.forEach(t => t.destroy());
-        platforms = [];
-        trampolines = [];
-        if (scene) {
-          let ground = scene.add.image(400, 568, 'ground').setScale(2);
-          ground.setInteractive({ draggable: true });
-          ground.setData('type', 'platform');
-          ground.setData('scaleX', 2);
-          ground.setData('scaleY', 1);
-          platforms.push(ground);
-        }
-      }
-    });
-
-    document.getElementById('exportBtn').addEventListener('click', () => alert("Fonction Export non incluse ici"));
-    document.getElementById('testBtn').addEventListener('click', () => alert("Fonction Test non incluse ici"));
-
-    // =================== Publication avec capture d'écran ===================
-    document.getElementById("publishBtn").addEventListener("click", () => {
-      const nom = prompt("Nom du niveau ?");
-      if (!nom) return;
-
-      try {
-        // Attendre un petit délai pour s'assurer que le rendu est complet
-        setTimeout(() => {
-          // Récupérer le canvas Phaser directement
-          const phaserCanvas = scene.game.canvas;
-          
-          // Créer un canvas pour la miniature
-          const canvas = document.createElement("canvas");
-          canvas.width = 320;
-          canvas.height = 240;
-          const ctx = canvas.getContext("2d");
-          
-          // Dessiner le canvas Phaser sur la miniature
-          ctx.drawImage(phaserCanvas, 0, 0, canvas.width, canvas.height);
-          
-          // Convertir en data URL JPEG
-          const imageData = canvas.toDataURL("image/jpeg", 0.8);
-
-          // Préparer les données du niveau
-          const niveauData = {
-            params: {
-              survivalTime: Number(document.getElementById('survivalTime').value),
-              halfLives: Number(document.getElementById('halfLives').value),
-              initialBombs: Number(document.getElementById('initialBombs').value),
-              bombSpawnInterval: Number(document.getElementById('bombSpawnInterval').value)
-            },
-            platforms: platforms.map(p => ({
-              x: p.x,
-              y: p.y,
-              scaleX: p.getData('scaleX') || p.scaleX,
-              scaleY: p.getData('scaleY') || p.scaleY
-            })),
-            trampolines: trampolines.map(t => ({
-              x: t.x,
-              y: t.y
-            }))
-          };
-
-          // Charger les niveaux existants
-          const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
-          
-          // Ajouter le nouveau niveau
-          niveaux.push({ 
-            nom: nom, 
-            image: imageData, 
-            data: niveauData 
-          });
-          
-          // Sauvegarder dans localStorage
-          localStorage.setItem("mesNiveaux", JSON.stringify(niveaux));
-
-          console.log("Niveau sauvegardé:", {
-            nom: nom,
-            imageSize: imageData.length,
-            platformCount: platforms.length,
-            trampolineCount: trampolines.length
-          });
-
-          alert("✅ Niveau publié avec succès !");
-          
-        }, 100); // Petit délai pour s'assurer que le rendu est terminé
-        
-      } catch (error) {
-        console.error("Erreur lors de la publication:", error);
-        alert("❌ Erreur lors de la publication du niveau");
-      }
     });
   </script>
 </body>
