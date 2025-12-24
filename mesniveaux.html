@@ -9,37 +9,21 @@
       color: white;
       font-family: Arial;
       text-align: center;
-      padding: 20px;
     }
     #liste {
       display: grid;
-      grid-template-columns: repeat(auto-fill, 200px);
+      grid-template-columns: repeat(auto-fill, 180px);
       gap: 20px;
       justify-content: center;
       margin-top: 30px;
     }
     .niveau {
       cursor: pointer;
-      background: #333;
-      padding: 10px;
-      border-radius: 10px;
-      transition: transform 0.2s;
-    }
-    .niveau:hover {
-      transform: scale(1.05);
-      background: #444;
     }
     .niveau img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 8px;
+      width: 180px;
+      border-radius: 10px;
       border: 2px solid #555;
-      background: #000;
-    }
-    .niveau p {
-      margin-top: 10px;
-      font-weight: bold;
     }
   </style>
 </head>
@@ -52,31 +36,27 @@
   <img src="assets/logorefresh.png" alt="Actualiser"
     style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px;"
     onclick="window.location.reload()">
-  
   <h1>Mes niveaux</h1>
   <div id="liste"></div>
-  
   <script>
     const liste = document.getElementById("liste");
     const niveaux = JSON.parse(localStorage.getItem("mesNiveaux")) || [];
-    
     if (niveaux.length === 0) {
-      liste.innerHTML = "<p style='margin-top: 50px;'>Aucun niveau publié. Créez-en un dans l'éditeur !</p>";
-    } else {
-      niveaux.forEach((niveau, index) => {
-        const div = document.createElement("div");
-        div.className = "niveau";
-        div.innerHTML = `
-          <img src="${niveau.image}" alt="${niveau.nom}">
-          <p>${niveau.nom}</p>
-        `;
-        div.onclick = () => {
-          localStorage.setItem("niveauAJouer", index);
-          window.location.href = "jouer.html";
-        };
-        liste.appendChild(div);
-      });
+      liste.innerHTML = "<p>Aucun niveau publié</p>";
     }
+    niveaux.forEach((niveau, index) => {
+      const div = document.createElement("div");
+      div.className = "niveau";
+      div.innerHTML = `
+        <img src="${niveau.image}" alt="${niveau.nom}">
+        <p>${niveau.nom}</p>
+      `;
+      div.onclick = () => {
+        localStorage.setItem("niveauAJouer", index);
+        window.location.href = "jouer.html";
+      };
+      liste.appendChild(div);
+    });
   </script>
 </body>
 </html>
