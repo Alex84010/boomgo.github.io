@@ -207,7 +207,7 @@
 
     // ================= GAMEPLAY =================
     function updateLivesDisplay() {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 4; i++) {
         const value = halfLives - i * 2;
         if (value >= 2) lifeIcons[i].setTexture('vie');
         else if (value === 1) lifeIcons[i].setTexture('demivie');
@@ -283,3 +283,4 @@
 
 </body>
 </html>
+
