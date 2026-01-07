@@ -89,7 +89,12 @@
       this.load.image('novie', 'assets/vie2.png');
       this.load.image('tremplin', 'assets/tremplin.png');
       this.load.image('end', 'assets/portailend.png');
-      this.load.spritesheet('dude', 'assets/personnageframe.png', { frameWidth: 32, frameHeight: 48 });
+
+            const selectedChar = localStorage.getItem('selectedCharacter') || '1';
+this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
+    frameWidth: 320,
+    frameHeight: 480
+});
     }
 
     /* ================= CREATE ================= */
@@ -111,6 +116,7 @@
       createPlatformsForLevel(0);
 
       player = this.physics.add.sprite(100, 450, 'dude');
+      player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(true);
       player.setDepth(2000);
@@ -224,5 +230,6 @@
   </script>
 
 </body>
+
 
 </html>
