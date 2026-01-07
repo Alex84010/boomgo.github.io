@@ -69,8 +69,13 @@
       this.load.image('vie', 'assets/vie1.png');
       this.load.image('demivie', 'assets/vie3.png');
       this.load.image('novie', 'assets/vie2.png');
-      this.load.spritesheet('dude', 'assets/personnageframe.png', { frameWidth: 32, frameHeight: 48 });
       this.load.image('tremplin', 'assets/tremplin.png');
+      
+          const selectedChar = localStorage.getItem('selectedCharacter') || '1';
+this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
+    frameWidth: 320,
+    frameHeight: 480
+});
     }
 
     function create() {
@@ -264,5 +269,6 @@
   </script>
 
 </body>
+
 
 </html>
