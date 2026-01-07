@@ -94,6 +94,7 @@ this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
       platforms.create(750, 210, 'ground');
 
       player = this.physics.add.sprite(100, 450, 'dude');
+      player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(true);
 
@@ -261,3 +262,4 @@ this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
 
 
 </html>
+
