@@ -55,13 +55,11 @@
   <img src="assets/logorefresh.png" alt="Actualiser"
     style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px;"
     onclick="window.location.href='./niv1a10.html'">
-
-  <div class="levels" id="levels"></div>
-
-  <!-- Ajoutez ceci après vos autres images de navigation, dans le <body> -->
-<img id="nextLevels" src="assets/flechedroite.png" alt="Niveaux suivants"
+  <img id="nextLevels" src="assets/flechedroite.png" alt="Niveaux suivants"
   style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 125px; display: none;"
   onclick="window.location.href='./niv11a20.html'">
+
+  <div class="levels" id="levels"></div>
 
   <script>
     var config = {
@@ -285,7 +283,7 @@
 
     for (let i = 1; i <= 10; i++) {
 
-      // 🔒 level 10 : n'existe pas tant qu'il n'est pas débloqué
+      // level 10 : n'existe pas tant qu'il n'est pas débloqué
       if (i === 10 && localStorage.getItem('unlockLevel10') !== 'true') {
         continue;
       }
