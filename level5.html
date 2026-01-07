@@ -69,8 +69,13 @@
       this.load.image('vie', 'assets/vie1.png');
       this.load.image('demivie', 'assets/vie3.png');
       this.load.image('novie', 'assets/vie2.png');
-      this.load.spritesheet('dude', 'assets/personnageframe.png', { frameWidth: 32, frameHeight: 48 });
       this.load.image('tremplin', 'assets/tremplin.png');
+
+            const selectedChar = localStorage.getItem('selectedCharacter') || '1';
+this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
+    frameWidth: 320,
+    frameHeight: 480
+});
     }
 
     function create() {
@@ -100,6 +105,7 @@
       tremplin.refreshBody();
 
       player = this.physics.add.sprite(100, 450, 'dude');
+      player.setScale(0.125);
       player.setBounce(0.04);
       player.setCollideWorldBounds(true);
       player.setDepth(20);
@@ -268,5 +274,6 @@
   </script>
 
 </body>
+
 
 </html>
