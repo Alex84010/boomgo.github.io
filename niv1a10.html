@@ -297,8 +297,19 @@
 
       const img = document.createElement('img');
 
-      const isUnlocked =
-        i === 1 || localStorage.getItem('level' + (i - 1)) === 'done';
+let isUnlocked;
+
+if (i === 1) {
+  isUnlocked = true;
+}
+else if (i === 10) {
+  // Le niveau 10 NE dépend PLUS du niveau 9
+  isUnlocked = localStorage.getItem('unlockLevel10') === 'true';
+}
+else {
+  // Tous les autres niveaux dépendent du précédent
+  isUnlocked = localStorage.getItem('level' + (i - 1)) === 'done';
+}
 
       if (isUnlocked) {
         level.classList.add('active');
@@ -345,3 +356,4 @@ if (localStorage.getItem('level9') === 'done') {
 
 
 </html>
+
