@@ -25,7 +25,8 @@
 
 <body>
 
-  <img src="assets/logohome.png" alt="Home" style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px;"
+  <img src="assets/logohome.png" alt="Home"
+    style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px;"
     onclick="window.location.href='./index.html'">
   <img src="assets/logoretour.png" alt="Retour"
     style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px;"
@@ -90,11 +91,11 @@
       this.load.image('tremplin', 'assets/tremplin.png');
       this.load.image('end', 'assets/portailend.png');
 
-            const selectedChar = localStorage.getItem('selectedCharacter') || '1';
-this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
-    frameWidth: 320,
-    frameHeight: 480
-});
+      const selectedChar = localStorage.getItem('selectedCharacter') || '1';
+      this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
+        frameWidth: 320,
+        frameHeight: 480
+      });
     }
 
     /* ================= CREATE ================= */
@@ -127,7 +128,11 @@ this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
       stars = this.physics.add.group({ key: 'star', repeat: 11, setXY: { x: 12, y: 0, stepX: 70 } });
       stars.children.iterate(c => c.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8)).setScale(0));
 
+      /* ===== BOMBS ===== */
       bombs = this.physics.add.group();
+      for (let i = 0; i < 3; i++) {
+        spawnBomb(this);
+      }
 
       /* ===== END OBJECT ===== */
       endObject = this.physics.add.staticSprite(790, 58, 'end');
@@ -181,13 +186,31 @@ this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
     function hitBomb(player, bomb) {
       bomb.disableBody(true, true);
       lives--;
-      if (lives >= 0) lifeIcons[lives].setTexture('novie').setScale(0.02);
+
+      if (lives >= 0) {
+        lifeIcons[lives].setTexture('novie').setScale(0.02);
+      }
 
       if (lives <= 0) {
         this.physics.pause();
         player.setTint(0xff0000);
         gameOver = true;
       }
+    }
+
+    function spawnBomb(scene) {
+      let bomb = bombs.create(
+        Phaser.Math.Between(50, 750),
+        16,
+        'bomb'
+      );
+      bomb.setScale(0.03);
+      bomb.setBounce(1);
+      bomb.setCollideWorldBounds(true);
+      bomb.setVelocity(
+        Phaser.Math.Between(-200, 200),
+        Phaser.Math.Between(20, 200)
+      );
     }
 
     function reachEnd() {
@@ -209,7 +232,4 @@ this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
   </script>
 
 </body>
-
-
 </html>
-
