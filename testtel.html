@@ -3,12 +3,12 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Solo</title>
     <link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">
     <!-- Charger la bibliothèque Phaser pour créer des jeux 2D -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
 </head>
-
 <style>
     /* Supprimer les marges par défaut du navigateur */
     body {
@@ -19,57 +19,74 @@
         align-items: center;
         height: 100vh;
         overflow: hidden;
+        touch-action: none;
     }
 
     /* Le jeu */
     canvas {
         border: 4px solid rgb(41, 21, 21);
-    }
-
-    /* Empêcher le zoom sur mobile */
-    * {
-        touch-action: manipulation;
-        -webkit-user-select: none;
-        user-select: none;
+        touch-action: none;
     }
 </style>
 
 <body>
 
     <img src="assets/logohome.png" alt="Home"
-        style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px; z-index: 2000;"
+        style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 10px; z-index: 1000;"
         onclick="window.location.href='./index.html'">
     <img src="assets/logoretour.png" alt="Retour"
-        style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px; z-index: 2000;"
+        style="cursor:pointer; width:105px; position: fixed; top: 10px; left: 125px; z-index: 1000;"
         onclick="window.location.href='./index.html'">
     <img src="assets/logorefresh.png" alt="Actualiser"
-        style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px; z-index: 2000;"
+        style="cursor:pointer; width:105px; position: fixed; top: 10px; right: 10px; z-index: 1000;"
         onclick="window.location.href='./solo.html'">
 
     <div id="game-wrapper" class="game-wrapper"></div>
 
-    <!-- Boutons de contrôle mobile -->
-    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 1000;">
-        <button id="btnLeft"
-                style="width: 80px; height: 80px; font-size: 32px; background: rgba(0,0,0,0.7); color: white; border: 2px solid white; border-radius: 10px; cursor: pointer; font-weight: bold;">
-            ←
-        </button>
-        <button id="btnJump"
-                style="width: 80px; height: 80px; font-size: 24px; background: rgba(0,0,0,0.7); color: white; border: 2px solid white; border-radius: 10px; cursor: pointer; font-weight: bold;">
-            ↑
-        </button>
-        <button id="btnRight"
-                style="width: 80px; height: 80px; font-size: 32px; background: rgba(0,0,0,0.7); color: white; border: 2px solid white; border-radius: 10px; cursor: pointer; font-weight: bold;">
-            →
-        </button>
-    </div>
-
     <script>
+        // Variables pour les contrôles mobiles
+        let lastVolume = null;
+        let movingLeft = false;
+        let movingRight = false;
+
+        // Détecter les changements de volume pour les contrôles
+        if ('mediaSession' in navigator) {
+            // Tenter de détecter les changements de volume
+            document.addEventListener('volumechange', handleVolumeChange);
+        }
+
+        // Fonction pour gérer les changements de volume
+        function handleVolumeChange(event) {
+            // Cette approche utilise l'API Media Session
+            // Note: La détection de volume est limitée dans les navigateurs mobiles
+        }
+
+        // Alternative: Détecter les touches de volume via keydown
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'VolumeDown' || e.keyCode === 174) {
+                e.preventDefault();
+                movingLeft = true;
+                movingRight = false;
+            } else if (e.key === 'VolumeUp' || e.keyCode === 175) {
+                e.preventDefault();
+                movingRight = true;
+                movingLeft = false;
+            }
+        });
+
+        document.addEventListener('keyup', function(e) {
+            if (e.key === 'VolumeDown' || e.keyCode === 174) {
+                movingLeft = false;
+            } else if (e.key === 'VolumeUp' || e.keyCode === 175) {
+                movingRight = false;
+            }
+        });
+
         // Configuration du jeu Phaser
         var config = {
             type: Phaser.AUTO,
-            width: 800,
-            height: 600,
+            width: window.innerWidth,
+            height: window.innerHeight,
             physics: {
                 default: 'arcade',
                 arcade: {
@@ -77,11 +94,15 @@
                     debug: false
                 }
             },
-            scene: { preload, create, update }
+            scene: { preload, create, update },
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            }
         };
 
         // Créer une nouvelle instance du jeu
-        var game = new Phaser.Game(config);
+        new Phaser.Game(config);
 
         // ===== Variables globales du jeu =====
         var player;
@@ -112,12 +133,6 @@
             [{ x: 100, y: 500 }, { x: 300, y: 350 }, { x: 500, y: 200 }, { x: 700, y: 100 }]
         ];
 
-        // Variables pour contrôles mobiles
-        var mobileLeft = false;
-        var mobileRight = false;
-        var mobileJump = false;
-
-        // Fonction preload: charger tous les assets
         function preload() {
             this.load.image('sky', 'assets/sky.png');
             this.load.image('ground', 'assets/platform.png');
@@ -134,26 +149,62 @@
             });
         }
 
-        // Fonction create: initialiser les éléments du jeu
         function create() {
+            const scene = this;
+            
             // Ajouter l'image du ciel en arrière-plan
-            this.add.image(400, 300, 'sky');
+            this.add.image(config.width / 2, config.height / 2, 'sky')
+                .setDisplaySize(config.width, config.height);
 
             // Afficher le score en haut à gauche
             scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
 
-            // Créer les icônes de vies
+            // Créer les icônes de vies en haut à gauche
             for (let i = 0; i < lives; i++) {
                 let icon = this.add.image(40 + i * 45, 70, 'vie').setScale(0.02);
                 lifeIcons.push(icon);
             }
 
+            function createPlatformsForLevel(level) {
+                // Supprimer anciennes plateformes
+                platformsArray.forEach(p => p.destroy());
+                platformsArray = [];
+
+                // Supprimer le tremplin s'il existe
+                if (tremplin) {
+                    tremplin.destroy();
+                    tremplin = null;
+                }
+
+                // Créer plateformes du niveau
+                platformLayouts[level].forEach(pos => {
+                    platformsArray.push(platforms.create(pos.x, pos.y, 'ground'));
+                });
+
+                // Ajouter le tremplin UNIQUEMENT au level 1 (index 1)
+                if (level === 1) {
+                    tremplin = platforms.scene.physics.add.staticSprite(387, 514, 'tremplin');
+                    tremplin.setScale(0.04);
+                    tremplin.refreshBody();
+
+                    platforms.scene.physics.add.collider(player, tremplin, bounceOnTrampoline, null, platforms.scene);
+                    platforms.scene.physics.add.collider(stars, tremplin);
+                    platforms.scene.physics.add.collider(bombs, tremplin);
+                }
+            }
+
+            function bounceOnTrampoline(player, tremplin) {
+                player.setVelocityY(-600);
+            }
+
             // Créer le groupe statique de plateformes
             platforms = this.physics.add.staticGroup();
-            platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+            platforms.create(config.width / 2, config.height - 32, 'ground')
+                .setScale(2)
+                .refreshBody();
 
             // Créer les plateformes du niveau 0
-            createPlatformsForLevel.call(this, 0);
+            createPlatformsForLevel(0);
 
             // Créer le personnage du joueur
             player = this.physics.add.sprite(100, 450, 'dude');
@@ -182,8 +233,23 @@
                 repeat: -1
             });
 
-            // Créer les étoiles
-            stars = this.physics.add.group({ key: 'star', repeat: 11, setXY: { x: 12, y: 0, stepX: 70 } });
+            // ===== CONTRÔLES TACTILES POUR MOBILE =====
+            // Toucher l'écran pour sauter
+            this.input.on('pointerdown', function(pointer) {
+                if (!gameOver && player.body.touching.down) {
+                    player.setVelocityY(-330);
+                }
+            });
+
+            // Récupérer les touches du clavier (désactivé pour mobile mais gardé dans le code)
+            cursors = this.input.keyboard.createCursorKeys();
+
+            // Créer les étoiles à collecter
+            stars = this.physics.add.group({ 
+                key: 'star', 
+                repeat: 11, 
+                setXY: { x: 12, y: 0, stepX: 70 } 
+            });
             stars.children.iterate(c => {
                 c.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
                 c.setScale(0.015);
@@ -192,151 +258,54 @@
             // Créer le groupe des bombes
             bombs = this.physics.add.group();
 
-            // Configurer les collisions
+            // Configurer les collisions et chevauchements
             this.physics.add.collider(player, platforms);
             this.physics.add.collider(stars, platforms);
             this.physics.add.collider(bombs, platforms);
             this.physics.add.overlap(player, stars, collectStar, null, this);
             this.physics.add.collider(player, bombs, hitBomb, null, this);
-
-            // Initialiser les contrôles clavier
-            cursors = this.input.keyboard.createCursorKeys();
-
-            // Configurer les boutons mobiles
-            setupMobileControls();
+            this.physics.add.collider(stars, tremplin);
+            this.physics.add.collider(bombs, tremplin);
+            this.physics.add.collider(player, tremplin, bounceOnTrampoline, null, this);
         }
 
-        // Configuration des boutons mobiles
-        function setupMobileControls() {
-            const btnLeft = document.getElementById('btnLeft');
-            const btnRight = document.getElementById('btnRight');
-            const btnJump = document.getElementById('btnJump');
-
-            // Bouton gauche
-            btnLeft.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                mobileLeft = true;
-                mobileRight = false;
-            });
-            btnLeft.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                mobileLeft = false;
-            });
-            btnLeft.addEventListener('mousedown', () => {
-                mobileLeft = true;
-                mobileRight = false;
-            });
-            btnLeft.addEventListener('mouseup', () => {
-                mobileLeft = false;
-            });
-
-            // Bouton droite
-            btnRight.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                mobileRight = true;
-                mobileLeft = false;
-            });
-            btnRight.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                mobileRight = false;
-            });
-            btnRight.addEventListener('mousedown', () => {
-                mobileRight = true;
-                mobileLeft = false;
-            });
-            btnRight.addEventListener('mouseup', () => {
-                mobileRight = false;
-            });
-
-            // Bouton saut
-            btnJump.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                mobileJump = true;
-            });
-            btnJump.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                mobileJump = false;
-            });
-            btnJump.addEventListener('mousedown', () => {
-                mobileJump = true;
-            });
-            btnJump.addEventListener('mouseup', () => {
-                mobileJump = false;
-            });
-        }
-
-        // Fonction update: mise à jour du jeu à chaque frame
         function update() {
             if (gameOver) return;
 
-            // Contrôles clavier OU mobile
-            if (cursors.left.isDown || mobileLeft) {
+            // Gérer les déplacements avec les boutons de volume
+            if (movingLeft) {
                 player.setVelocityX(-160);
                 player.anims.play('left', true);
-            } 
-            else if (cursors.right.isDown || mobileRight) {
+            } else if (movingRight) {
                 player.setVelocityX(160);
                 player.anims.play('right', true);
-            } 
-            else {
+            } else {
                 player.setVelocityX(0);
                 player.anims.play('turn');
             }
-
-            // Saut (clavier OU mobile)
-            if ((cursors.up.isDown || mobileJump) && player.body.touching.down) {
-                player.setVelocityY(-330);
-                mobileJump = false; // Reset pour éviter les sauts multiples
-            }
         }
 
-        // Fonction pour créer les plateformes d'un niveau
-        function createPlatformsForLevel(level) {
-            // Supprimer anciennes plateformes
-            platformsArray.forEach(p => p.destroy());
-            platformsArray = [];
-
-            // Supprimer le tremplin s'il existe
-            if (tremplin) {
-                tremplin.destroy();
-                tremplin = null;
-            }
-
-            // Créer plateformes du niveau
-            platformLayouts[level].forEach(pos => {
-                platformsArray.push(platforms.create(pos.x, pos.y, 'ground'));
-            });
-
-            // Ajouter le tremplin au niveau 1
-            if (level === 1) {
-                tremplin = this.physics.add.staticSprite(387, 514, 'tremplin');
-                tremplin.setScale(0.04);
-                tremplin.refreshBody();
-
-                this.physics.add.collider(player, tremplin, bounceOnTrampoline, null, this);
-                this.physics.add.collider(stars, tremplin);
-                this.physics.add.collider(bombs, tremplin);
-            }
-        }
-
-        function bounceOnTrampoline(player, tremplin) {
-            player.setVelocityY(-600);
-        }
-
-        // Fonction collecte d'étoile
         function collectStar(player, star) {
             star.disableBody(true, true);
             score += 10;
             scoreText.setText('Score: ' + score);
 
             if (stars.countActive(true) === 0) {
-                changeLevel.call(this);
+                changeLevel();
 
-                let x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+                let x = (player.x < config.width / 2) ? 
+                    Phaser.Math.Between(config.width / 2, config.width) : 
+                    Phaser.Math.Between(0, config.width / 2);
                 let bomb = bombs.create(x, 16, 'bomb');
                 bomb.setScale(0.015);
-                bomb.body.setSize(bomb.width * 0.015, bomb.height * 0.015);
-                bomb.body.setOffset(bomb.width * 0.015, bomb.height * 0.015);
+                bomb.body.setSize(
+                    bomb.width * 0.015,
+                    bomb.height * 0.015
+                );
+                bomb.body.setOffset(
+                    bomb.width * 0.015,
+                    bomb.height * 0.015
+                );
                 bomb.setBounce(1).setCollideWorldBounds(true);
                 bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
 
@@ -344,13 +313,14 @@
             }
         }
 
-        // Fonction collision avec bombe
         function hitBomb(player, bomb) {
             bomb.disableBody(true, true);
             lives--;
 
             if (lives >= 0) {
-                lifeIcons[lives].setTexture('novie').setScale(0.02);
+                lifeIcons[lives]
+                    .setTexture('novie')
+                    .setScale(0.02);
             }
 
             if (lives <= 0) {
@@ -361,22 +331,19 @@
             }
         }
 
-        // Fonction changement de niveau
-        function changeLevel() {
-            currentLevel = (currentLevel + 1) % platformLayouts.length;
-            createPlatformsForLevel.call(this, currentLevel);
+        function createPlatformsForLevel(level) {
+            platformsArray.forEach(p => p.destroy());
+            platformsArray = [];
+
+            platformLayouts[level].forEach(pos => {
+                platformsArray.push(platforms.create(pos.x, pos.y, 'ground'));
+            });
         }
 
-        // Empêcher le zoom et le scroll sur mobile
-        document.addEventListener('touchmove', function(e) {
-            if (e.scale !== 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
+        function changeLevel() {
+            currentLevel = (currentLevel + 1) % platformLayouts.length;
+            createPlatformsForLevel(currentLevel);
+        }
     </script>
 </body>
 
